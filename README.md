@@ -1,7 +1,7 @@
 # Anticipatory-Indicators-of-Human-Walking-Motion
 
 ## Environment
-The experiment environment consists of five targets and a user. The y of (x,y) coordinates of each target is similar. 
+The experiment environment consists of five targets and a user. Every target has the same y of (x,y) coordinates.
 
 ## Library
 The library of the trajectories is stored in Assets/Datasets/. it has 6 columns consisting of the ID, (x, y, z), yaw and the target of each trial at each time step.

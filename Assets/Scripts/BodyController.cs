@@ -496,9 +496,9 @@ public class BodyController : MonoBehaviour
         string res = String.Join(delimiter, output);
         
         if(!File.Exists(file_path))
-            File.WriteAllText(file_path, "" + res + Environment.NewLine); 
+            File.WriteAllText(file_path, "," + res + Environment.NewLine); 
         else
-            File.AppendAllText(file_path, "" + res + Environment.NewLine);
+            File.AppendAllText(file_path, "," + res + Environment.NewLine);
     }
 
 

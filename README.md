@@ -4,7 +4,7 @@
 The experiment environment consists of five targets and a user. Every target has the same y of (x,y) coordinates.
 
 ## Library
-The library of the trajectories is stored in Assets/Datasets/. it has 6 columns consisting of the ID, (x, y, z), yaw and the target of each trial at each time step.
+The library of the trajectories is stored in Assets/Datasets/. it has 6 columns consisting of the ID, (x, y, z), yaw in degress and the target of each trial at each time step.
 The velocities are calculated from the 4th order of the 1st derivative of the position. To make all the trials the same length, Dynamic Time Warping is applied to each trial. 
 A multivariate Gaussian is used resulting in a mean and variance for each time step of each target.
 

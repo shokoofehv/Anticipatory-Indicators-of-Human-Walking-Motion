@@ -481,7 +481,7 @@ public class BodyController : MonoBehaviour
         rotations.Add(yaw);
     }
 
-    void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw)
+    void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw, List<float> probs)
     {   
         string delimiter = ","; 
 
@@ -490,15 +490,20 @@ public class BodyController : MonoBehaviour
             new_position.x,
             new_position.y,
             new_position.z,
-            yaw
+            yaw,
+            probs[0],
+            probs[1],
+            probs[2],
+            probs[3],
+            probs[4],
         }; 
 
         string res = String.Join(delimiter, output);
         
         if(!File.Exists(file_path))
-            File.WriteAllText(file_path, "," + res + Environment.NewLine); 
+            File.WriteAllText(file_path, res + Environment.NewLine); 
         else
-            File.AppendAllText(file_path, "," + res + Environment.NewLine);
+            File.AppendAllText(file_path, res + Environment.NewLine);
     }
 
 
@@ -585,7 +590,7 @@ public class BodyController : MonoBehaviour
         var probs = CalculateProb();
 
         UpdatePositionList(curr_pos, velocity, yaw);
-        SavetoCSV(curr_pos, velocity, yaw);
+        
 
         int max_id = 0;
         float max_v = 0;
@@ -597,8 +602,9 @@ public class BodyController : MonoBehaviour
                 max_id = i;
             }
         }   
-
+        SavetoCSV(curr_pos, velocity, yaw, probs);
         Debug.Log("You are heading to target N.: " + max_id.ToString());
+        
 
     }
 }

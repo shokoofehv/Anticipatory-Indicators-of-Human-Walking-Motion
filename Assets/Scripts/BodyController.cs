@@ -11,7 +11,7 @@ using System;
 // public class  
 public class BodyController : MonoBehaviour
 {
-    public float speed = 40.42f;
+    public float speed = 120.42f;
     private Rigidbody rb;
     Vector3 movement;
 
@@ -68,8 +68,8 @@ public class BodyController : MonoBehaviour
         CalculateInverse();
 
   
-        // if(File.Exists(file_path))
-        //     File.Delete(file_path);
+        if(File.Exists(file_path))
+            File.Delete(file_path);
         
         
     }

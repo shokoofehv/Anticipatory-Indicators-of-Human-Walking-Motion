@@ -49,6 +49,7 @@ public class Calculations
     int frame_rate = 90;
     int resample_freq = 100;
     int n_targets = 5;
+    int n_features = 5; 
 
     void CSVParser()
     {   // reading from path csv and adding the data to rec_positions, rec_rotations and targets
@@ -496,27 +497,38 @@ public class Calculations
                         throw new Exception("Something went wrong with the means.");
             }
         Debug.Log("The means calculation is done.");
+        
+        // for (int i = 0; i < mean.Count; i++)
+        //     for (int j = 0; j < aligned_t.Count; j++)
+        //         if (i == aligned_t[j].Last())
+        //             Debug.Log(mean[i].Count + " " + aligned_x[j].Count + " " + 
+        //                                             aligned_z[j].Count + " " + 
+        //                                             aligned_rot[j].Count + " " + 
+        //                                             aligned_vx[j].Count + " " + 
+        //                                             aligned_vz[j].Count + " " 
+        //                     );
     }
 
     float[,] MultMatrix(float[] mat)
-    {   
+    {   // mult a [n_features, 1] and its transpose
         float[,] res = new float[mat.Length, mat.Length];
-        for(int i=0; i<mat.Length; i++)
+        for(int i = 0; i < mat.Length; i++)
         {
-            for(int j=0; j<mat.Length; j++)
+            for(int j = 0; j < mat.Length; j++)
             {
                 res[i, j] = mat[i] * mat[j];
             }
         }
+        // returning a [n_features, n_features] matrix
         return res;
     }
 
     void SumMatrix(ref float[,] sum, float[,] mat, int n_dem)
-    {
+    {   // sum two matrix of [n_features, n_features] 
         float[,] res = sum;
-        for(int i=0; i<mat.GetLength(0); i++)
+        for(int i = 0; i < n_features; i++)
         {
-            for(int j=0; j<mat.GetLength(1); j++)
+            for(int j = 0; j < n_features; j++)
             {
                 res[i, j] += mat[i, j] / (n_dem - 1);
             }
@@ -527,26 +539,29 @@ public class Calculations
 
     void FindVariance()
     {
-        for(int i=0; i<mean.Count; i++)
+        // calculating the 4th formula in the early paper  
+        for(int i = 0; i < n_targets; i++)
         {
             List<int> indexes = new List<int>();
             // find the trials with the same targets
-            for(int j=0; j<aligned_t.Count; j++)
-                if(i==aligned_t[j].Last())
+            for(int j = 0; j < aligned_t.Count; j++)
+                if(i == aligned_t[j].Last())
                     indexes.Add(j);
             
             if (indexes.Count <= 1)
             {
                 throw new Exception("Class " + i.ToString() + " doesn't have enough records.");
-                // continue;
             }
 
-            List<float[,]> variance_i = new List<float[,]>();
+            List<float[,]> variance_temp = new List<float[,]>();
             
-            for(int j=0; j<mean[i].Count; j++)
+            // for each time step
+            for(int j = 0; j < mean[i].Count; j++)
             {   
-                float [,] sum_res = new float [mean[i][j].Length, mean[i][j].Length];
-                for (int k=0; k<indexes.Count; k++)
+                float [,] sum_res = new float [n_features, n_features];
+
+                // for each similiar trials
+                foreach (int k in indexes)
                 {
                     float[] arr = new float[]{
                         aligned_x[k][j],
@@ -555,16 +570,25 @@ public class Calculations
                         aligned_vx[k][j],
                         aligned_vz[k][j]
                     };
-                    float[] point_diff = new float[arr.Length];
-                    float[,] mult_res = new float[arr.Length, arr.Length]; 
-                    for(int t=0; t<arr.Length; t++)
-                        point_diff[t] = arr[t] - mean[i][j][t];
-                    mult_res = MultMatrix(point_diff);
-                    SumMatrix(ref sum_res, mult_res, indexes.Count);
+                    float[] point_diff = new float[n_features];
+                    float[,] mult_res = new float[n_features, n_features];
+
+                    // subtract each feature point in the k index in the j time step
+                    // from the mean of the same target as trial at the j time step
+                    for(int t = 0; t < arr.Length; t++)
+                        point_diff[t] = arr[t] - mean[i][j][t]; // returns a n_features x 1 matrix 
+                    
+                    // mult the subtraction matrix to its transpose
+                    // returns a n_features x n_features matrix 
+                    mult_res = MultMatrix(point_diff); 
+                    
+                    // sum all the demonstration at the same j time step
+                    // returns a n_features x n_features matrix
+                    SumMatrix(ref sum_res, mult_res, indexes.Count); 
                 }
-                variance_i.Add(sum_res);
+                variance_temp.Add(sum_res);
             }
-            variance.Add(variance_i); 
+            variance.Add(variance_temp); 
         }
     }
 
@@ -654,7 +678,17 @@ public class Calculations
         Vectorize();
         Align();
         FindMean();
+        FindVariance();
+        // Debug.Log(mean[0][337][0]);
+        // string str = "";
+        // for (int i = 0; i < n_features; i++)
+        //     for (int j = 0; j < n_features; j++)
+        //         str += variance[0][0][i, j] + " ";
+        //     str += "\n";
+        // Debug.Log(str);
 
+        
+           
         
         
              

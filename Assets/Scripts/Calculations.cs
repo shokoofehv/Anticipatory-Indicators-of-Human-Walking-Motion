@@ -575,9 +575,10 @@ public class Calculations
 
                     // subtract each feature point in the k index in the j time step
                     // from the mean of the same target as trial at the j time step
+                    // returns a n_features x 1 matrix 
                     for(int t = 0; t < arr.Length; t++)
-                        point_diff[t] = arr[t] - mean[i][j][t]; // returns a n_features x 1 matrix 
-                    
+                        point_diff[t] = arr[t] - mean[i][j][t]; 
+
                     // mult the subtraction matrix to its transpose
                     // returns a n_features x n_features matrix 
                     mult_res = MultMatrix(point_diff); 
@@ -590,6 +591,18 @@ public class Calculations
             }
             variance.Add(variance_temp); 
         }
+    }
+    
+    void FindVarianceControl()
+    {
+        string str = "Variance matrix of target 0 at a time step as an example. \n";
+        for (int i = 0; i < n_features; i++)
+        {
+            for (int j = 0; j < n_features; j++)
+                str += variance[0][variance[0].Count - 1][i, j] + " ";
+            str += "\n";
+        }
+        Debug.Log(str);
     }
 
     void CalculateInverse()
@@ -617,7 +630,7 @@ public class Calculations
             for(int j=0; j<variance[i].Count; j++)
             {
                 float [,] m = variance[i][j];
-                GFG tt = new GFG();
+                MDeterminant tt = new MDeterminant();
                 float _det = tt.DeterminantOfMatrix(m, 5);
                 if (Double.IsNaN(_det))
                     det_i.Add(0);
@@ -673,29 +686,25 @@ public class Calculations
     public void Main(String[] args) 
     {
         CSVParser();
+        CSVParserControl();
         Resample();
+        ResampleControl();
         Velocity();
+        VelocityControl();
         Vectorize();
+        VectorizeControl();
         Align();
+        AlignControl();
         FindMean();
+        FindMeanControl();
         FindVariance();
-        // Debug.Log(mean[0][337][0]);
-        // string str = "";
-        // for (int i = 0; i < n_features; i++)
-        //     for (int j = 0; j < n_features; j++)
-        //         str += variance[0][0][i, j] + " ";
-        //     str += "\n";
-        // Debug.Log(str);
+        FindVarianceControl();
 
-        
-           
-        
-        
              
     }
 }
 
-
+// class dynamic time warping
 class SimpleDTW
 {
     double[] x;
@@ -864,7 +873,8 @@ class SimpleDTW
     }
 }
 
-class GFG {
+// class matrix determinant
+class MDeterminant {
  
     public float DeterminantOfMatrix(float[, ] mat, int n)
     {
@@ -949,6 +959,7 @@ class GFG {
     }
 }
 
+// class matrix inverse
 class MInverse
 {
 	int N = 5;

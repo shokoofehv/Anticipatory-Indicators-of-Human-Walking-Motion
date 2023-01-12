@@ -432,14 +432,19 @@ public class Calculations
         }
         Debug.Log("Aligning is done.");
 
-        // for ( int i = 0; i < aligned_x.Count; i++)
-        // Debug.Log("aligned x length: " + aligned_x[i].Count + "---" +
-        //           "aligned z length: " + aligned_z[i].Count + "---" +
-        //           "aligned vx length: " + aligned_vx[i].Count + "---" +
-        //           "aligned vz length: " + aligned_vz[i].Count + "---" +
-        //           "aligned rot length: " + aligned_rot[i].Count + "---" +
-        //           "aligned target: " + aligned_t[i].Last()
-        //           );
+        for (int t = 0; t < n_targets; t++)
+            for ( int i = 0; i < aligned_x.Count; i++)
+                if (t == aligned_t[i].Last())
+                {
+                    Debug.Log("Target: " + aligned_t[i].Last() + "---" +
+                              "aligned x length: " + aligned_x[i].Count + "---" +
+                              "aligned z length: " + aligned_z[i].Count + "---" +
+                              "aligned vx length: " + aligned_vx[i].Count + "---" +
+                              "aligned vz length: " + aligned_vz[i].Count + "---" +
+                              "aligned rot length: " + aligned_rot[i].Count
+                              );
+                    break;
+                }
     }
     
     void FindMean()
@@ -676,9 +681,12 @@ public class Calculations
                 Debug.Log("det for target " + i + " at time step " + j + " is " + determinant[i][j]);
     }
 
-    float CalculateDeltaVar(int id, int k)
+    float CalculateDeltaVar(int id, int k, 
+                            List<Vector3> positions, 
+                            List<Vector3> velocities, 
+                            List<float> rotations)
     {
-        int N=5;
+        int N = n_targets;
         float[] arr = new float[]{
                         positions[k].x,
                         positions[k].z,
@@ -686,36 +694,65 @@ public class Calculations
                         velocities[k].x,
                         velocities[k].z};
         float [] new_arr = new float[N];
-        for (int i=0; i<N; i++)
+        for (int i=0; i < N; i++)
         {
             float temp = 0.0f;
-            for(int j=0; j<N; j++)
+            for(int j=0; j < N; j++)
             {
                 temp += (arr[j]-mean[id][k][j]) * inverse_variance[id][k][j, i]; 
             }
             new_arr[i] = temp;
         }
+        string str = "";
+        foreach (var t in new_arr) 
+            str += t + " ";
+        // Debug.Log("new array: " + str);
+
         float res = 0.0f;
-        for (int i=0; i<N; i++)
+        for (int i=0; i < N; i++)
             res += new_arr[i] * (arr[i]-mean[id][k][i]);
+        // Debug.Log(k + " res: " + res);
+        if (Double.IsNaN(res))
+            return 0;
+        if (res == Mathf.Infinity)
+            return float.MaxValue;
         return res;
     }
 
-    List <float> CalculateProb()
+    List <float> CalculateProb(List<Vector3> positions, 
+                               List<Vector3> velocities, 
+                               List<float> rotations)
     {
-        int N_f = 5;
+        int N_f = n_features;
         List <float> target_pro = new List<float>();
-        
-        for (int i=0; i<variance.Count; i++)
-        {
-            float temp = 0.0f;
-            for(int j=0; j<positions.Count; j++)
+
+        // calculate probability for each target (formula No.7 in the early paper)
+        // j is annotating as k in the paper 
+        // i is annotating as t in the ppaer  
+        for (int i = 0; i < n_targets; i++)
+        {   
+            double temp = 0.0f;
+             
+            for(int j = 0; j < positions.Count; j++)
             {
-                temp += (float) (-1.0 * Math.Log10(Math.Pow(2 * Math.PI, N_f/2) * Math.Pow(determinant[i][j], 0.5)) 
-                        - 0.5 * (CalculateDeltaVar(i, j)));
+                int jj = j;
+                // Debug.Log("jj is " + jj);
+                if (j >= determinant[i].Count)
+                    jj = determinant[i].Count - 1;
+
+                if (determinant[i][jj] < 1)
+                    temp += (- 0.5 * (CalculateDeltaVar(i, jj, positions, velocities, rotations))) / positions.Count;
+                else 
+                    temp += (double) ((-1.0 * Math.Log(Math.Pow(2 * Math.PI, N_f/2) * Math.Pow(determinant[i][jj], 0.5)) 
+                                       - 0.5 * CalculateDeltaVar(i, jj, positions, velocities, rotations)) 
+                                       / positions.Count
+                                     );
+                // Debug.Log(" target " + i + " sum at time step " + j + " from " + jj + " is " + temp);
             }
-            target_pro.Add(temp);
+            // Debug.Log("total value at target " + i + " is " + temp);
+            target_pro.Add((float) temp);
         }
+        // Debug.Log("target pro " + target_pro.Count);
         return target_pro;
     }
 
@@ -739,7 +776,43 @@ public class Calculations
         CalculateInverseControl();
         CalculateDet();
 
-             
+        List<Vector3> positions = new List<Vector3>();
+        List<Vector3> velocities = new List<Vector3>();
+        List<float> rotations = new List<float>();
+
+        for (int t = 0; t < aligned_t.Count; t++)
+        {
+            int tr = t; // select the trial 0:24
+            int time_step = aligned_t[tr].Count; // select the time-step 
+                                                 // default: end of the trial
+
+            Debug.Log("Presumed target is of trial: " + t + " is " + aligned_t[tr].Last());
+            for (int i = 0; i < time_step; i++)
+            {
+                positions.Add(new Vector3(aligned_x[tr][i], 0, aligned_z[tr][i])); 
+                velocities.Add(new Vector3(aligned_vx[tr][i], 0, aligned_vz[tr][i]));
+                rotations.Add(aligned_rot[tr][i]);
+            }
+
+            var probabilities = CalculateProb(positions, velocities, rotations);
+            List<float> p_normalized = new List<float>();
+
+
+            int max_id = probabilities.IndexOf(probabilities.Max());
+
+            string str = "The most probable target is: " + max_id + 
+                         "\n" + 
+                         "The probabilities are: \n";
+
+            for (int p = 0 ; p < probabilities.Count; p++)
+                str += "Target" + p + ": " + probabilities[p] + "\t";
+            Debug.Log(str);
+
+            if (max_id == ((int) aligned_t[tr].Last()))
+                Debug.Log("+++++ CORRECT +++++");
+            else 
+                Debug.Log("---- INCORRECT ----");
+        }
     }
 }
 

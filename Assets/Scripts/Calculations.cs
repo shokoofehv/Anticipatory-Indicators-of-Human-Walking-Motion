@@ -607,13 +607,17 @@ public class Calculations
 
     void CalculateInverse()
     {
-        int N = 5;
+        // for each target        
         for (int i=0; i<variance.Count; i++)
         {
             List<float[,]> i_var_temp = new List<float[,]>();
-            for (int j=0; j<variance[i].Count; j++)
+
+            // at each time step
+            for (int j = 0; j < variance[i].Count; j++)
             {
-                float [,] _i_var = new float[N,N];
+                float [,] _i_var = new float[n_features, n_features];
+
+                // calculating the inverse matrix
                 MInverse inv = new MInverse();
                 _i_var = inv.Inverse(variance[i][j]);
                 i_var_temp.Add(_i_var);
@@ -622,67 +626,99 @@ public class Calculations
         }   
     }
 
+    void CalculateInverseControl()
+    {
+        float [,] _i_var = new float[n_features, n_features];        
+        MInverse inv = new MInverse();
+        _i_var = inv.Inverse(variance[0][variance[0].Count - 1]);
+
+        string str = "Inverse variance matrix of target 0 at a time step as an example. \n";
+        for (int i = 0; i < n_features; i++)
+        {
+            for (int j = 0; j < n_features; j++)
+                str += _i_var[i, j] + " ";
+            str += "\n";
+        }
+        Debug.Log(str);
+    }
+
     void CalculateDet()
     {
+        // traversing each target
         for(int i=0; i<variance.Count; i++)
         {
-            List<float> det_i = new List<float>();
+            List<float> det_temp = new List<float>();
+            // traversing each time step
             for(int j=0; j<variance[i].Count; j++)
-            {
-                float [,] m = variance[i][j];
-                MDeterminant tt = new MDeterminant();
-                float _det = tt.DeterminantOfMatrix(m, 5);
-                if (Double.IsNaN(_det))
-                    det_i.Add(0);
-                else 
-                    det_i.Add(_det);
+            {   // deep copy the variance
+                float [,] m = variance[i][j].Clone() as float[,];
+
+                // instance the class and calculate determinant
+                MInverse dett = new MInverse();
+                float _det = dett.determinant(m, n_features);
+                det_temp.Add(_det);
+
+                // ignore
+                // if (Double.IsNaN(_det))
+                //     det_temp.Add(0);
+                // else 
+                //     det_temp.Add(_det);
+                
             }
-            determinant.Add(det_i);
+            determinant.Add(det_temp);
         }
     }
 
-    // float CalculateDeltaVar(int id, int k)
-    // {
-    //     int N=5;
-    //     float[] arr = new float[]{
-    //                     positions[k].x,
-    //                     positions[k].z,
-    //                     rotations[k],
-    //                     velocities[k].x,
-    //                     velocities[k].z};
-    //     float [] new_arr = new float[N];
-    //     for (int i=0; i<N; i++)
-    //     {
-    //         float temp = 0.0f;
-    //         for(int j=0; j<N; j++)
-    //         {
-    //             temp += (arr[j]-mean[id][k][j]) * inverse_variance[id][k][j, i]; 
-    //         }
-    //         new_arr[i] = temp;
-    //     }
-    //     float res = 0.0f;
-    //     for (int i=0; i<N; i++)
-    //         res += new_arr[i] * (arr[i]-mean[id][k][i]);
-    //     return res;
-    // }
+    void CalculateDetControl()
+    {
+        for (int i = 0; i < determinant.Count; i++)      
+            for (int j = 0; j < determinant[i].Count; j++)
+                Debug.Log("det for target " + i + " at time step " + j + " is " + determinant[i][j]);
+    }
 
-    // List <float> CalculateProb()
-    // {
-    //     int N_f = 5;
-    //     List <float> target_pro = new List<float>();
+    float CalculateDeltaVar(int id, int k)
+    {
+        int N=5;
+        float[] arr = new float[]{
+                        positions[k].x,
+                        positions[k].z,
+                        rotations[k],
+                        velocities[k].x,
+                        velocities[k].z};
+        float [] new_arr = new float[N];
+        for (int i=0; i<N; i++)
+        {
+            float temp = 0.0f;
+            for(int j=0; j<N; j++)
+            {
+                temp += (arr[j]-mean[id][k][j]) * inverse_variance[id][k][j, i]; 
+            }
+            new_arr[i] = temp;
+        }
+        float res = 0.0f;
+        for (int i=0; i<N; i++)
+            res += new_arr[i] * (arr[i]-mean[id][k][i]);
+        return res;
+    }
+
+    List <float> CalculateProb()
+    {
+        int N_f = 5;
+        List <float> target_pro = new List<float>();
         
-    //     for (int i=0; i<variance.Count; i++)
-    //     {
-    //         float temp = 0.0f;
-    //         for(int j=0; j<positions.Count; j++)
-    //         {
-    //             temp += (float) (-1.0 * Math.Log10(Math.Pow(2 * Math.PI, N_f/2) * Math.Pow(determinant[i][j], 0.5)) 
-    //                     - 0.5 * (CalculateDeltaVar(i, j)));
-    //         }
-    //         target_pro.Add(temp);
-    //     }
-    //     return target_pro;
-    // }
+        for (int i=0; i<variance.Count; i++)
+        {
+            float temp = 0.0f;
+            for(int j=0; j<positions.Count; j++)
+            {
+                temp += (float) (-1.0 * Math.Log10(Math.Pow(2 * Math.PI, N_f/2) * Math.Pow(determinant[i][j], 0.5)) 
+                        - 0.5 * (CalculateDeltaVar(i, j)));
+            }
+            target_pro.Add(temp);
+        }
+        return target_pro;
+    }
+
     public void Main(String[] args) 
     {
         CSVParser();
@@ -699,6 +735,9 @@ public class Calculations
         FindMeanControl();
         FindVariance();
         FindVarianceControl();
+        CalculateInverse();
+        CalculateInverseControl();
+        CalculateDet();
 
              
     }
@@ -995,7 +1034,7 @@ class MInverse
 
     /* Recursive function for finding determinant of matrix.
     n is current dimension of [,]A. */
-    float determinant(float [,] A, int n)
+    public float determinant(float [,] A, int n)
     {
     	float D = 0; // Initialize result
 
@@ -1055,7 +1094,7 @@ class MInverse
     // matrix is singular
     public float [,] Inverse(float [,] A)
     {
-        float [,]inverse = new float[N, N];
+        float [,] inverse = new float[N, N];
     	// Find determinant of [,]A
     	float det = determinant(A, N);
     	// if (det == 0)

@@ -67,9 +67,9 @@ public class HeadController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 movement = OnMove();
-        Vector3 direction = OnHeading(movement);
-        OnRotate(direction);
+        // Vector3 movement = OnMove();
+        // Vector3 direction = OnHeading(movement);
+        // OnRotate(direction);
         // Debug.Log("movement: " + movement.ToString());
         // Vector3 tempVect = speed * movement * Time.deltaTime;
         // rb.MovePosition(transform.position + tempVect);

@@ -21,27 +21,22 @@ public class BodyController : MonoBehaviour
 
     string file_path = @"Assets/Log/positions.csv";
 
+    HeadRotation head;
+
     void Start()
     {
 
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
-        // CSVParser(out rec_positions, out rec_rotations, out targets);
-        // Resample(); 
-        // Velocity();
-        // Vectorize();
-        // Align();
-        // FindMu();
-        // FindVariance();
-        // CalculateDet();
-        // CalculateInverse();
         Calculations cal = new Calculations();
         cal.Main(null);
-  
+
+        GameObject gameObject = new GameObject("User Head");
+        head = gameObject.AddComponent<HeadRotation>();
+
         if(File.Exists(file_path))
             File.Delete(file_path);
-        
         
     }
 
@@ -52,39 +47,14 @@ public class BodyController : MonoBehaviour
         Vector3 tempVect = speed * movement * Time.deltaTime;
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
-        var yaw = OnHeading(movement);
-        // var probs = CalculateProb();
+        var yaw = head.GetRotation();
+        Debug.Log("rotation in body: " + yaw);
 
         UpdatePositionList(curr_pos, velocity, yaw);
-        
-
-        // int max_id = 0;
-        // float max_v = 0;
-        // for (int i = 0; i< probs.Count; i++)
-        // {
-        //     if (probs[i] > max_v)
-        //     {
-        //         max_v = probs[i];
-        //         max_id = i;
-        //     }
-        // }   
-        // SavetoCSV(curr_pos, velocity, yaw, probs);
-        // Debug.Log("You are heading to target N.: " + max_id.ToString());
-        
+        SavetoCSV(transform.position, velocity, yaw);
 
     }
     
-    float OnHeading(Vector3 movement)
-    {   
-        float temp;
-        if (movement.z == 1)
-            temp = 90;
-        else if (movement.z == -1) 
-            temp = 270;
-        else 
-            temp = Mathf.Rad2Deg * Mathf.Atan(Mathf.Sin(movement.z)/Mathf.Cos(movement.x));
-        return temp;
-    }
 
     Vector3 OnMove()
     {
@@ -101,7 +71,9 @@ public class BodyController : MonoBehaviour
         rotations.Add(yaw);
     }
 
-    void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw, List<float> probs)
+    void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw 
+                    //, List<float> probs
+                    )
     {   
         string delimiter = ","; 
 
@@ -110,12 +82,12 @@ public class BodyController : MonoBehaviour
             new_position.x,
             new_position.y,
             new_position.z,
-            yaw,
-            probs[0],
-            probs[1],
-            probs[2],
-            probs[3],
-            probs[4],
+            yaw
+            // probs[0],
+            // probs[1],
+            // probs[2],
+            // probs[3],
+            // probs[4],
         }; 
 
         string res = String.Join(delimiter, output);

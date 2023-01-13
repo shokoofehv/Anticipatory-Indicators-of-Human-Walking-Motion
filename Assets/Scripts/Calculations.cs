@@ -715,7 +715,7 @@ public class Calculations
         if (Double.IsNaN(res))
             return 0;
         if (res == Mathf.Infinity)
-            return float.MaxValue;
+            return 0;
         return res;
     }
 
@@ -740,6 +740,7 @@ public class Calculations
                 if (j >= determinant[i].Count)
                     jj = determinant[i].Count - 1;
 
+                //
                 if (determinant[i][jj] < 1)
                     temp += (- 0.5 * (CalculateDeltaVar(i, jj, positions, velocities, rotations))) / positions.Count;
                 else 

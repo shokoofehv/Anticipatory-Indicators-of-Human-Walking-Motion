@@ -48,7 +48,6 @@ public class BodyController : MonoBehaviour
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
         var yaw = head.GetRotation();
-        Debug.Log("rotation in body: " + yaw);
 
         UpdatePositionList(curr_pos, velocity, yaw);
         SavetoCSV(transform.position, velocity, yaw);

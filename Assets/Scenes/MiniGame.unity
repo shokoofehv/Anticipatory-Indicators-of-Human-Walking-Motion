@@ -1047,6 +1047,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 1.42
+  head: {fileID: 1777885879}
 --- !u!114 &1668015762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1186,6 +1187,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 560dbf6bcb4645b49a358bf7c285aa0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  head_orientation: 0
 --- !u!1 &1958715140
 GameObject:
   m_ObjectHideFlags: 0

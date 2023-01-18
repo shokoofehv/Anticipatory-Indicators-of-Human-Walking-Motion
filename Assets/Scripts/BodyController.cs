@@ -21,7 +21,7 @@ public class BodyController : MonoBehaviour
 
     string file_path = @"Assets/Log/positions.csv";
 
-    HeadRotation head;
+    public HeadRotation head;
 
     void Start()
     {
@@ -31,9 +31,6 @@ public class BodyController : MonoBehaviour
 
         Calculations cal = new Calculations();
         cal.Main(null);
-
-        GameObject gameObject = new GameObject("User Head");
-        head = gameObject.AddComponent<HeadRotation>();
 
         if(File.Exists(file_path))
             File.Delete(file_path);
@@ -47,8 +44,7 @@ public class BodyController : MonoBehaviour
         Vector3 tempVect = speed * movement * Time.deltaTime;
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
-        var yaw = head.GetRotation();
-
+        float yaw = head.head_orientation;
         UpdatePositionList(curr_pos, velocity, yaw);
         SavetoCSV(transform.position, velocity, yaw);
 
@@ -76,7 +72,6 @@ public class BodyController : MonoBehaviour
     {   
         string delimiter = ","; 
 
-        // Vector3 head_orientation = head.GetAngles();
         float[] output = {
             new_position.x,
             new_position.y,

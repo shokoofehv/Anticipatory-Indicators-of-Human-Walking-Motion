@@ -1017,7 +1017,7 @@ public class Calculations
             
             for(int j = 0; j < positions.Count; j++)
             {
-                int k = j; //FindNearest(positions[j], i);
+                int k = FindNearest(positions[j], i);
 
                 var delta_var_delta = - 0.5 * CalculateDeltaVar(i, j, k, positions, velocities, rotations);
                 var g = G_term(i, k);

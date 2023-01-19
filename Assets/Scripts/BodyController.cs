@@ -11,7 +11,7 @@ using System;
 // public class  
 public class BodyController : MonoBehaviour
 {
-    public float speed = 120.42f;
+    public float speed = 240.0f;
     private Rigidbody rb;
     Vector3 movement;
 
@@ -19,21 +19,19 @@ public class BodyController : MonoBehaviour
     List <Vector3> velocities = new List <Vector3>();  
     List <float> rotations = new List <float>();  
 
-    string file_path = @"Assets/Log/positions.csv";
-
     public HeadRotation head;
-
+    public Calculations cal;
+    public Recordings rec;
     void Start()
     {
 
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
-        Calculations cal = new Calculations();
-        cal.Main(null);
+        cal = new Calculations();
+        cal.Train();
 
-        if(File.Exists(file_path))
-            File.Delete(file_path);
+        rec = new Recordings();
         
     }
 
@@ -45,8 +43,11 @@ public class BodyController : MonoBehaviour
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
         float yaw = head.head_orientation;
+
+        cal.CalculateOnRun(positions, velocities, rotations);
+
         UpdatePositionList(curr_pos, velocity, yaw);
-        SavetoCSV(transform.position, velocity, yaw);
+        rec.SavetoCSV(transform.position, velocity, yaw);
 
     }
     
@@ -66,31 +67,31 @@ public class BodyController : MonoBehaviour
         rotations.Add(yaw);
     }
 
-    void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw 
-                    //, List<float> probs
-                    )
-    {   
-        string delimiter = ","; 
+    // void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw 
+    //                 //, List<float> probs
+    //                 )
+    // {   
+    //     string delimiter = ","; 
 
-        float[] output = {
-            new_position.x,
-            new_position.y,
-            new_position.z,
-            yaw
-            // probs[0],
-            // probs[1],
-            // probs[2],
-            // probs[3],
-            // probs[4],
-        }; 
+    //     float[] output = {
+    //         new_position.x,
+    //         new_position.y,
+    //         new_position.z,
+    //         yaw
+    //         // probs[0],
+    //         // probs[1],
+    //         // probs[2],
+    //         // probs[3],
+    //         // probs[4],
+    //     }; 
 
-        string res = String.Join(delimiter, output);
+    //     string res = String.Join(delimiter, output);
         
-        if(!File.Exists(file_path))
-            File.WriteAllText(file_path, res + Environment.NewLine); 
-        else
-            File.AppendAllText(file_path, res + Environment.NewLine);
-    }
+    //     if(!File.Exists(file_path))
+    //         File.WriteAllText(file_path, res + Environment.NewLine); 
+    //     else
+    //         File.AppendAllText(file_path, res + Environment.NewLine);
+    // }
 
     Vector3 VelocityCal()
     {   // 4th order Taylor expansion for the 1st derivative

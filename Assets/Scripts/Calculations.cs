@@ -46,11 +46,11 @@ public class Calculations
     List<List<float[,]>> inverse_variance = new List<List<float[,]>>(); // inverse of variance
     List<List<float>> determinant = new List<List<float>>(); // determinant of variance matrix
 
-    int last_target_id = 0;
+    int last_target_id = 1000;
 
     int frame_rate = 90;
     int resample_freq = 100;
-    int n_targets = 5;
+    public int n_targets = 5;
     int n_features = 5; 
     int test_size = 180;
 
@@ -1084,9 +1084,9 @@ public class Calculations
                 + "Number of incorrect predictions: " + incorrects);
     }
 
-    public void CalculateOnRun(List<Vector3> positions, 
-                        List<Vector3> velocities, 
-                        List<float> rotations)
+    public List <float> CalculateOnRun(List<Vector3> positions, 
+                               List<Vector3> velocities, 
+                               List<float> rotations)
     {   
         var probabilities = CalculateProb(positions, velocities, rotations);
         // List<float> p_normalized = new List<float>();
@@ -1104,17 +1104,18 @@ public class Calculations
             Debug.Log(str);
 
         }
+        return probabilities;
  
     }
 
     public void Train() 
     {
         CSVParser();
-        CSVParserControl();
+        // CSVParserControl();
         RemoveDuplicates();
         // RemoveDuplicatesControl();
         Downsample();
-        DownsampleControl();
+        // DownsampleControl();
 
         // Resample();
         // ResampleControl();
@@ -1124,9 +1125,9 @@ public class Calculations
         resample_targets = targets;
 
         Velocity();
-        VelocityControl();
+        // VelocityControl();
         Vectorize();
-        VectorizeControl();
+        // VectorizeControl();
         aligned_x = x_vect;
         aligned_z = z_vect;
         aligned_rot = resample_rotations;
@@ -1137,13 +1138,13 @@ public class Calculations
         // Align();
         // AlignControl();
         FindMean();
-        FindMeanControl();
+        // FindMeanControl();
         FindVariance();
-        FindVarianceControl();
+        // FindVarianceControl();
         CalculateInverse();
-        CalculateInverseControl();
+        // CalculateInverseControl();
         CalculateDet();
-        CalculateDetControl();
+        // CalculateDetControl();
 
     }
         

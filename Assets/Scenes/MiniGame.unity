@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: e3134c1e2e24c0b428d4cd96f99fee01, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -230,7 +230,6 @@ GameObject:
   - component: {fileID: 462325441}
   - component: {fileID: 462325440}
   - component: {fileID: 462325439}
-  - component: {fileID: 462325438}
   m_Layer: 0
   m_Name: Target 0
   m_TagString: Untagged
@@ -238,18 +237,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &462325438
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 462325437}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5ecde0ecebf6d4940a7310c8ca4addc6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!65 &462325439
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1047,6 +1034,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 1.42
+  initial_position: {x: 0, y: 0, z: 0}
   head: {fileID: 1777885879}
 --- !u!114 &1668015762
 MonoBehaviour:

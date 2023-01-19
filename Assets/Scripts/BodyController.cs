@@ -7,29 +7,36 @@ using System.Text;
 using System.Linq;
 using System;
 
-
 // public class  
 public class BodyController : MonoBehaviour
 {
-    public float speed = 240.0f;
+    int n_targets;
+
+    public float speed = 1e5f;
+    public Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
-
+    int last_target_id;
+    
     List <Vector3> positions = new List <Vector3>();  
     List <Vector3> velocities = new List <Vector3>();  
     List <float> rotations = new List <float>();  
+    List <List <float>> probabilities = new List <List <float>>();  
 
     public HeadRotation head;
     public Calculations cal;
     public Recordings rec;
+
     void Start()
     {
+        initial_position = transform.position;
 
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
         cal = new Calculations();
         cal.Train();
+        n_targets = cal.n_targets; 
 
         rec = new Recordings();
         
@@ -39,18 +46,49 @@ public class BodyController : MonoBehaviour
     {   
         var curr_pos = transform.position;
         movement = OnMove();
-        Vector3 tempVect = speed * movement * Time.deltaTime;
+        Vector3 tempVect = speed * movement * Time.deltaTime; // 
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
         float yaw = head.head_orientation;
 
-        cal.CalculateOnRun(positions, velocities, rotations);
+        var probability = cal.CalculateOnRun(positions, velocities, rotations);
 
-        UpdatePositionList(curr_pos, velocity, yaw);
-        rec.SavetoCSV(transform.position, velocity, yaw);
+        UpdatePositionList(curr_pos, velocity, yaw, probability);
+        
+
+        if (Input.GetKeyDown(KeyCode.R)) 
+        {
+            Reset();
+        }
+        
 
     }
     
+    void Reset()
+    {
+        transform.position = initial_position;
+        rec.SavetoCSV(positions, rotations, probabilities, last_target_id);
+
+        positions = new List <Vector3>();  
+        velocities = new List <Vector3>();  
+        rotations = new List <float>();  
+        probabilities = new List <List <float>>(); 
+
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {   
+        string str = "Collision detected. ";
+        for (int i = 0; i < n_targets; i++)
+            if (collision.gameObject.name == ("Target " + i))
+            {
+                last_target_id = i;
+
+                str += "You hit Target " + i;
+                Debug.Log(str);
+                break;
+            }
+    }
 
     Vector3 OnMove()
     {
@@ -60,38 +98,13 @@ public class BodyController : MonoBehaviour
         return Vector3.ClampMagnitude(movement, 1);
     }
 
-    void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw)
+    void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, List <float> probability)
     {
         positions.Add(new_position);
         velocities.Add(new_velocity);
         rotations.Add(yaw);
+        probabilities.Add(probability);
     }
-
-    // void SavetoCSV(Vector3 new_position, Vector3 new_velocity, float yaw 
-    //                 //, List<float> probs
-    //                 )
-    // {   
-    //     string delimiter = ","; 
-
-    //     float[] output = {
-    //         new_position.x,
-    //         new_position.y,
-    //         new_position.z,
-    //         yaw
-    //         // probs[0],
-    //         // probs[1],
-    //         // probs[2],
-    //         // probs[3],
-    //         // probs[4],
-    //     }; 
-
-    //     string res = String.Join(delimiter, output);
-        
-    //     if(!File.Exists(file_path))
-    //         File.WriteAllText(file_path, res + Environment.NewLine); 
-    //     else
-    //         File.AppendAllText(file_path, res + Environment.NewLine);
-    // }
 
     Vector3 VelocityCal()
     {   // 4th order Taylor expansion for the 1st derivative

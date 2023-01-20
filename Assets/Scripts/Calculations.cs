@@ -10,7 +10,7 @@ using System;
 public class Calculations
 {
     string dataset_path = @"Assets/Datasets/test.csv";
-    bool debug_mode = true;
+    bool debug_mode = false;
 
     List <List <float[]>> rec_positions = new List <List <float[]>>(); //variable for the recordings from the csv 
                                                                        //containing each trial -> each time step -> (x, y, z)
@@ -54,6 +54,12 @@ public class Calculations
     public int n_targets = 5;
     int n_features = 5; 
     int test_size = 110;
+
+    public Calculations(bool flag)
+    {
+        if (flag)
+            dataset_path = @"Assets/Datasets/test-mltiple start.csv";
+    }
 
     void CSVParser()
     {   // reading from path csv and adding the data to rec_positions, rec_rotations and targets
@@ -1172,7 +1178,7 @@ public class Calculations
             CalculateDet();
         }
         
-        Debug.Log("\t \t \t Training phase is done." 
+        Debug.Log("Training phase is done." 
                 + "\n" 
                 + "=============================================");
         

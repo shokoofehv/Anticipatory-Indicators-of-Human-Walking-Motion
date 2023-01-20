@@ -11,9 +11,10 @@ using Random=UnityEngine.Random;
 // public class  
 public class BodyController : MonoBehaviour
 {
-    bool agent_flag = true;
+    public bool agent_flag = false;
+    public bool random_initial_position_flag = true;
 
-    public float speed = 1e5f;
+    public float speed = 1e6f; 
     public Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
@@ -41,11 +42,15 @@ public class BodyController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
-        cal = new Calculations();
+        cal = new Calculations(random_initial_position_flag);
         cal.Train();
         n_targets = cal.n_targets; 
 
         rec = new Recordings();
+        
+        targets = new GameObject[n_targets];
+        for ( int i = 0; i < n_targets; i++)
+            targets[i] = GameObject.Find("Target " + i);
         
         if (agent_flag)
         {
@@ -54,17 +59,13 @@ public class BodyController : MonoBehaviour
             agent.destination = goal.position; 
         }
 
-        targets = new GameObject[n_targets];
-        for ( int i = 0; i < n_targets; i++)
-            targets[i] = GameObject.Find("Target " + i);
-        
     }
 
     void Update()
     {   
         var curr_pos = transform.position;
         movement = OnMove();
-        Vector3 tempVect = speed * movement * Time.deltaTime; // 
+        Vector3 tempVect = speed * movement * Time.deltaTime; 
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
         float yaw = head.head_orientation;
@@ -72,16 +73,13 @@ public class BodyController : MonoBehaviour
         var probability = cal.CalculateOnRun(positions, velocities, rotations);
 
         UpdatePositionList(curr_pos, velocity, yaw, probability);
-        
 
         if (Input.GetKeyDown(KeyCode.R)) 
-        {
             Reset();
-        }
         
     }
     
-    int PickRandomTarget()
+    int PickRandom()
     {
         int selected = Random.Range(0, n_targets); 
         return selected;
@@ -89,10 +87,19 @@ public class BodyController : MonoBehaviour
 
     void Reset()
     {
-        transform.position = initial_position;
         rec.SavetoCSV(positions, rotations, probabilities, last_target_id);
+        
+        if (random_initial_position_flag)
+        {
+            int i = PickRandom();
+            transform.position = new Vector3 (targets[i].transform.position.x,
+                                              initial_position.y,
+                                              initial_position.z);
+        }
+        else
+            transform.position = initial_position;
 
-        int selected_target = PickRandomTarget();
+        int selected_target = PickRandom();
         if(agent_flag)
             agent.destination = targets[selected_target].transform.position; 
 
@@ -116,6 +123,7 @@ public class BodyController : MonoBehaviour
                 Debug.Log(str);
                 break;
             }
+
         Reset();
     }
 

@@ -45,6 +45,7 @@ public class Recordings
                         , int target_id
                     )
     {   
+        Debug.Log("path " + path_id + " is saved.");
         string delimiter = ","; 
 
         for (int i = 0; i < positions.Count; i++)
@@ -66,10 +67,11 @@ public class Recordings
             string res = String.Join(delimiter, output);
             File.AppendAllText(file_path, res + Environment.NewLine);
         }
-        path_id++;
 
-        if (path_id == 150)
+        if (path_id == 750)
             UnityEditor.EditorApplication.isPlaying = false;
+        
+        path_id++;
         
     }
 

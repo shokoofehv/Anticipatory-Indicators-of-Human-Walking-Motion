@@ -58,7 +58,7 @@ public class Calculations
     public Calculations(bool flag)
     {
         if (flag)
-            dataset_path = @"Assets/Datasets/test-mltiple start.csv";
+            dataset_path = @"Assets/Datasets/test - multiple start.csv";
     }
 
     void CSVParser()

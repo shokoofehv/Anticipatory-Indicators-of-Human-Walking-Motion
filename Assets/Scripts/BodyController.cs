@@ -6,18 +6,20 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System;
+using Random=UnityEngine.Random;
 
 // public class  
 public class BodyController : MonoBehaviour
 {
-    int n_targets;
+    bool agent_flag = true;
 
     public float speed = 1e5f;
     public Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
     int last_target_id;
-    
+    public Transform goal;
+
     List <Vector3> positions = new List <Vector3>();  
     List <Vector3> velocities = new List <Vector3>();  
     List <float> rotations = new List <float>();  
@@ -26,6 +28,11 @@ public class BodyController : MonoBehaviour
     public HeadRotation head;
     public Calculations cal;
     public Recordings rec;
+    public UnityEngine.AI.NavMeshAgent agent;
+
+    public GameObject[] targets;
+
+    int n_targets;
 
     void Start()
     {
@@ -39,6 +46,17 @@ public class BodyController : MonoBehaviour
         n_targets = cal.n_targets; 
 
         rec = new Recordings();
+        
+        if (agent_flag)
+        {
+            agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+            agent.enabled = true;
+            agent.destination = goal.position; 
+        }
+
+        targets = new GameObject[n_targets];
+        for ( int i = 0; i < n_targets; i++)
+            targets[i] = GameObject.Find("Target " + i);
         
     }
 
@@ -61,18 +79,28 @@ public class BodyController : MonoBehaviour
             Reset();
         }
         
-
     }
     
+    int PickRandomTarget()
+    {
+        int selected = Random.Range(0, n_targets); 
+        return selected;
+    }
+
     void Reset()
     {
         transform.position = initial_position;
         rec.SavetoCSV(positions, rotations, probabilities, last_target_id);
 
+        int selected_target = PickRandomTarget();
+        if(agent_flag)
+            agent.destination = targets[selected_target].transform.position; 
+
         positions = new List <Vector3>();  
         velocities = new List <Vector3>();  
         rotations = new List <float>();  
         probabilities = new List <List <float>>(); 
+        Debug.Log("New path started.");
 
     }
 
@@ -88,6 +116,7 @@ public class BodyController : MonoBehaviour
                 Debug.Log(str);
                 break;
             }
+        Reset();
     }
 
     Vector3 OnMove()

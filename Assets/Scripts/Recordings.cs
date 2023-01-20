@@ -20,33 +20,24 @@ public class Recordings
         if(File.Exists(file_path))
             File.Delete(file_path);
 
-        string[] headers = {"id"
+        string[] headers = {"Id"
                             ,"x"
                             ,"y"
                             ,"z"
-                            ,"yaws"
-                            ,"probability t0"
-                            ,"probability t1"
-                            ,"probability t2"
-                            ,"probability t3"
-                            ,"probability t4"
-                            ,"target"
+                            ,"Rotation"
+                            ,"Probability t0"
+                            ,"Probability t1"
+                            ,"Probability t2"
+                            ,"Probability t3"
+                            ,"Probability t4"
+                            ,"Target"
                             };
+
         string header = String.Join(",", headers);
         File.WriteAllText(file_path, header + Environment.NewLine); 
 
     }
 
-    bool ResetHappend() 
-    {
-        if (Input.GetKeyDown(KeyCode.R)) 
-        {   
-            Debug.Log("New path started.");
-            return true;
-        }
-        else 
-            return false;
-    }
 
     public void SavetoCSV(List <Vector3> positions 
                         , List <float> yaws 
@@ -76,10 +67,9 @@ public class Recordings
             File.AppendAllText(file_path, res + Environment.NewLine);
         }
         path_id++;
-        // if(!File.Exists(file_path))
-        //     File.WriteAllText(file_path, res + Environment.NewLine); 
-        // else
-        //     File.AppendAllText(file_path, res + Environment.NewLine);
+
+        if (path_id == 150)
+            UnityEditor.EditorApplication.isPlaying = false;
         
     }
 

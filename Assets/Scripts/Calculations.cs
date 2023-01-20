@@ -10,6 +10,7 @@ using System;
 public class Calculations
 {
     string dataset_path = @"Assets/Datasets/test.csv";
+    bool debug_mode = true;
 
     List <List <float[]>> rec_positions = new List <List <float[]>>(); //variable for the recordings from the csv 
                                                                        //containing each trial -> each time step -> (x, y, z)
@@ -52,7 +53,7 @@ public class Calculations
     int resample_freq = 100;
     public int n_targets = 5;
     int n_features = 5; 
-    int test_size = 180;
+    int test_size = 110;
 
     void CSVParser()
     {   // reading from path csv and adding the data to rec_positions, rec_rotations and targets
@@ -100,22 +101,24 @@ public class Calculations
 
     void CSVParserControl() 
     {   // control the output of CSVParser
-        Debug.Log("Number of trials: " + targets.Count);
+        Debug.Log("Total number of trials: " + targets.Count);
 
         List<int> unique_targets = new List<int>(); //finding unique targets (in this case: 0 to 4)
         for(int i=0; i<targets.Count; i++)
             unique_targets.Add((int) (targets[i].Last()));
+        unique_targets.Sort();
 
         var q = from x in unique_targets //finding the count of each distinct target
                 group x by x into g
                 let count = g.Count()
                 orderby count descending
                 select new { Value = g.Key, Count = count };
-
+        
+        string str = "Number of trials for each target: \n";
         foreach (var x in q) 
-        {   
-            Debug.Log("Distinct number for target : " + x.Value + " is: " + x.Count);
-        }
+            str += "Target " + x.Value + ": " + x.Count + " ~~~ ";
+            
+        Debug.Log(str);
     }
 
     void RemoveDuplicates()
@@ -126,7 +129,7 @@ public class Calculations
 
         for (int i = 0; i < rec_positions.Count; i++)
         {
-            float threshold = 0.02f;
+            float threshold = 0.00002f;
             List <float[]> pos_temp = new List <float[]>(); 
             List <float> rot_temp = new List <float>();
             List <float> tar_temp = new List <float>();
@@ -165,27 +168,17 @@ public class Calculations
     {
         string str = "";
         for (int i = 0; i < rec_positions.Count; i++)
-            str += "rec_positions " + i + " count " + rec_positions[i].Count + "\t";
-        Debug.Log(str);
-
-        str = "";
-        for (int i = 0; i < rec_rotations.Count; i++)
-            str += "rec_rotations " + i + " count " + rec_rotations[i].Count + "\t";
-        Debug.Log(str);
-
-        str = "";
-        for (int i = 0; i < rec_rotations.Count; i++)
-            str += "targets " + i + " count " + targets[i].Count + "\t";
+            str += "Trial " + i + " length: " + rec_positions[i].Count + "\t";
         Debug.Log(str);
         
-        using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/duplicate.csv"))
-        {
-            for ( int i = 0; i < rec_positions[13].Count; i++)
-            {
-                string res = string.Join(",", targets[13][i]) + Environment.NewLine;
-                file.Write(res);
-            }
-        }   
+        // using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/duplicate.csv"))
+        // {
+        //     for ( int i = 0; i < rec_positions[13].Count; i++)
+        //     {
+        //         string res = string.Join(",", targets[13][i]) + Environment.NewLine;
+        //         file.Write(res);
+        //     }
+        // }   
     }
 
     public float[] Downsampling(float[] array, int Length)
@@ -265,6 +258,11 @@ public class Calculations
         List <List <float>> rotations_temp = new List <List <float>>(); 
         List <List <float>> targets_temp = new List <List <float>>(); 
 
+        int min_id = test_size;
+        for (int i = 0; i < rec_positions.Count; i++)
+            if (rec_positions[i].Count < test_size)
+                test_size = rec_positions[i].Count;
+
         for (int i = 0; i < rec_positions.Count; i++)
         {
             List <float> x = new List<float>();
@@ -300,14 +298,15 @@ public class Calculations
 
     void DownsampleControl()
     {
-        string str = "";
-        for (int i = 0; i < rec_positions.Count; i++)
-        {
-            str += "trial " + i + " positions " + rec_positions[i].Count + " rotations " + rec_rotations[i].Count 
-                        + " targets " + targets[i].Count + "\n";
+        // string str = "";
+        // for (int i = 0; i < rec_positions.Count; i++)
+        // {
+        //     str += "trial " + i + " positions " + rec_positions[i].Count + " rotations " + rec_rotations[i].Count 
+        //                 + " targets " + targets[i].Count + "\n";
                 
-        }
-        Debug.Log(str);
+        // }
+        // Debug.Log(str);
+
         using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/downsample.csv"))
         {   
             for (int tr = 0; tr < 5; tr++)
@@ -494,7 +493,7 @@ public class Calculations
                     velocity[i][j][1] != vz_vect[i][j])
                     throw new Exception("Something is wrong with vectorizing in the trial " + i + 
                                         " at the time step " + j);
-        Debug.Log("Vectorizing is done.");  
+        // Debug.Log("Vectorizing is done.");  
 
         using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/vectors.csv"))
         {   
@@ -723,19 +722,19 @@ public class Calculations
     
     void FindMeanControl()
     {
-        if (mean.Count == n_targets)
-            Debug.Log("Mean count: " + mean.Count + " equals to number of targets: " + n_targets + ".");
-        else 
-            throw new Exception("Something went wrong with the means.");
+        // if (mean.Count == n_targets)
+        //     Debug.Log("Mean count: " + mean.Count + " equals to number of targets: " + n_targets + ".");
+        // else 
+        //     throw new Exception("Something went wrong with the means.");
 
-        for (int i = 0; i < n_targets ; i++)
-            for (int j = 0; j < aligned_t.Count; j++)
-            {
-                if (i == aligned_t[j].Last())
-                    if (mean[i].Count != aligned_t[j].Count)
-                        throw new Exception("Something went wrong with the means.");
-            }
-        Debug.Log("The means calculation is done.");
+        // for (int i = 0; i < n_targets ; i++)
+        //     for (int j = 0; j < aligned_t.Count; j++)
+        //     {
+        //         if (i == aligned_t[j].Last())
+        //             if (mean[i].Count != aligned_t[j].Count)
+        //                 throw new Exception("Something went wrong with the means.");
+        //     }
+        // Debug.Log("The means calculation is done.");
         
         using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/mean.csv"))
         {
@@ -1110,42 +1109,73 @@ public class Calculations
 
     public void Train() 
     {
-        CSVParser();
-        // CSVParserControl();
-        RemoveDuplicates();
-        // RemoveDuplicatesControl();
-        Downsample();
-        // DownsampleControl();
+        if (debug_mode)
+        {
+            CSVParser();
+            CSVParserControl();
+            RemoveDuplicates();
+            RemoveDuplicatesControl();
+            Downsample();
+            DownsampleControl();
+            // Resample();
+            // ResampleControl();
 
-        // Resample();
-        // ResampleControl();
+            resample_positions = rec_positions;  
+            resample_rotations = rec_rotations;
+            resample_targets = targets;
 
-        resample_positions = rec_positions;  
-        resample_rotations = rec_rotations;
-        resample_targets = targets;
+            Velocity();
+            VelocityControl();
+            Vectorize();
+            VectorizeControl();
+            aligned_x = x_vect;
+            aligned_z = z_vect;
+            aligned_rot = resample_rotations;
+            aligned_t = resample_targets;
+            aligned_vx = vx_vect;
+            aligned_vz = vz_vect;
 
-        Velocity();
-        // VelocityControl();
-        Vectorize();
-        // VectorizeControl();
-        aligned_x = x_vect;
-        aligned_z = z_vect;
-        aligned_rot = resample_rotations;
-        aligned_t = resample_targets;
-        aligned_vx = vx_vect;
-        aligned_vz = vz_vect;
+            // Align();
+            // AlignControl();
+            FindMean();
+            FindMeanControl();
+            FindVariance();
+            FindVarianceControl();
+            CalculateInverse();
+            CalculateInverseControl();
+            CalculateDet();
+            CalculateDetControl();
+        }
+        else
+        {
+            CSVParser();
+            // RemoveDuplicates();
+            Downsample();
 
-        // Align();
-        // AlignControl();
-        FindMean();
-        // FindMeanControl();
-        FindVariance();
-        // FindVarianceControl();
-        CalculateInverse();
-        // CalculateInverseControl();
-        CalculateDet();
-        // CalculateDetControl();
+            resample_positions = rec_positions;  
+            resample_rotations = rec_rotations;
+            resample_targets = targets;
 
+            Velocity();
+            Vectorize();
+
+            aligned_x = x_vect;
+            aligned_z = z_vect;
+            aligned_rot = resample_rotations;
+            aligned_t = resample_targets;
+            aligned_vx = vx_vect;
+            aligned_vz = vz_vect;
+
+            FindMean();
+            FindVariance();
+            CalculateInverse();
+            CalculateDet();
+        }
+        
+        Debug.Log("\t \t \t Training phase is done." 
+                + "\n" 
+                + "=============================================");
+        
     }
         
 }

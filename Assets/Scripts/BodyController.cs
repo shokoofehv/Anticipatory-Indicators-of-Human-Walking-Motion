@@ -11,7 +11,7 @@ using Random=UnityEngine.Random;
 // public class  
 public class BodyController : MonoBehaviour
 {
-    public bool agent_flag = false;
+    public bool agent_flag = true;
     public bool random_initial_position_flag = true;
 
     public float speed = 1e6f; 
@@ -54,6 +54,7 @@ public class BodyController : MonoBehaviour
         
         if (agent_flag)
         {
+            Debug.Log("in agent mode");
             agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
             agent.enabled = true;
             agent.destination = goal.position; 

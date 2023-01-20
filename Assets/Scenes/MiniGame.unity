@@ -1034,6 +1034,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 217a6f6dc9b4a2f46b489b7f606a4cec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  agent_flag: 1
+  random_initial_position_flag: 1
   speed: 1.42
   initial_position: {x: 0, y: 0, z: 0}
   goal: {fileID: 462325442}

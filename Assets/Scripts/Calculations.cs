@@ -10,7 +10,7 @@ using System;
 public class Calculations
 {
     string dataset_path = @"Assets/Datasets/test.csv";
-    bool debug_mode = true;
+    bool debug_mode = false;
 
     List <List <float[]>> rec_positions = new List <List <float[]>>(); //variable for the recordings from the csv 
                                                                        //containing each trial -> each time step -> (x, y, z)

@@ -9,7 +9,7 @@ using System;
 
 public class Calculations
 {
-    string dataset_path = @"Assets/Datasets/test.csv";
+    string dataset_path = @"Assets/Datasets/train.csv";
     bool debug_mode = false;
 
     List <List <float[]>> rec_positions = new List <List <float[]>>(); //variable for the recordings from the csv 
@@ -58,7 +58,7 @@ public class Calculations
     public Calculations(bool flag)
     {
         if (flag)
-            dataset_path = @"Assets/Datasets/test - multiple start.csv";
+            dataset_path = @"Assets/Datasets/train - multiple start.csv";
     }
 
     void CSVParser()

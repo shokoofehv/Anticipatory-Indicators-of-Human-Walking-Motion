@@ -1094,21 +1094,25 @@ public class Calculations
                                List<float> rotations)
     {   
         var probabilities = CalculateProb(positions, velocities, rotations);
-        // List<float> p_normalized = new List<float>();
+        
         int max_id = probabilities.IndexOf(probabilities.Max());
+
 
         if (max_id != last_target_id)
         {
             last_target_id = max_id;
 
             string str = "Heading target is: " + max_id + "\n" 
-                         + "The probabilities are: \n";
-
-            for (int p = 0 ; p < probabilities.Count; p++)
-                str += "Target " + p + ": " + probabilities[p] + " ~~~ ";
+                         + "The probabilities are: ";
+            for (int p = 0 ; p < probabilities.Count; p++) 
+                str += "Target " + p + ": " + probabilities[p] + "\t"; 
             Debug.Log(str);
 
         }
+        var sum_list = Math.Abs(probabilities.Sum());
+        var p_normalized = probabilities.Select(x => x/sum_list).ToArray();
+        probabilities = new List <float> (p_normalized);
+
         return probabilities;
  
     }

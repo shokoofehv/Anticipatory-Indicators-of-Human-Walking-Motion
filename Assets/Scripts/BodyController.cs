@@ -7,11 +7,12 @@ using System.Text;
 using System.Linq;
 using System;
 using Random=UnityEngine.Random;
+using UnityEngine.AI;
 
 // public class  
 public class BodyController : MonoBehaviour
 {
-    public bool agent_flag = true;
+    public bool agent_mode = true;
     public bool random_initial_position_flag = true;
 
     public float speed = 1e6f; 
@@ -26,14 +27,17 @@ public class BodyController : MonoBehaviour
     List <float> rotations = new List <float>();  
     List <List <float>> probabilities = new List <List <float>>();  
 
+    public Manager manager;
     public HeadRotation head;
     public Calculations cal;
     public Recordings rec;
-    public UnityEngine.AI.NavMeshAgent agent;
+    public NavMeshAgent agent;
+    public TrajectoryToolbox traj_toolbox;
 
     public GameObject[] targets;
 
-    int n_targets;
+    public List<float> probability;
+    public int n_targets;
 
     void Start()
     {
@@ -46,18 +50,18 @@ public class BodyController : MonoBehaviour
         cal.Train();
         n_targets = cal.n_targets; 
 
-        rec = new Recordings();
+        rec = new Recordings(manager.data_collection);
         
         targets = new GameObject[n_targets];
         for ( int i = 0; i < n_targets; i++)
             targets[i] = GameObject.Find("Target " + i);
         
-        if (agent_flag)
+        if (agent_mode)
         {
-            Debug.Log("in agent mode");
-            agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+            Debug.Log("In Agent Mode");
+            agent = GetComponent<NavMeshAgent>();
             agent.enabled = true;
-            agent.destination = goal.position; 
+            // agent.destination = goal.position; 
         }
 
     }
@@ -71,7 +75,7 @@ public class BodyController : MonoBehaviour
         Vector3 velocity = VelocityCal();
         float yaw = head.head_orientation;
 
-        var probability = cal.CalculateOnRun(positions, velocities, rotations);
+        probability = cal.CalculateOnRun(positions, velocities, rotations);
 
         UpdatePositionList(curr_pos, velocity, yaw, probability);
 
@@ -101,7 +105,7 @@ public class BodyController : MonoBehaviour
             transform.position = initial_position;
 
         int selected_target = PickRandom();
-        if(agent_flag)
+        if(agent_mode)
             agent.destination = targets[selected_target].transform.position; 
 
         positions = new List <Vector3>();  

@@ -12,7 +12,6 @@ using System.Globalization;
 
 public class Recordings
 {
-    // public string data_collection;
 
     string file_path = @"Assets/Log/recordings.csv";
     string dataset_path = @"Assets/Datasets/" ;
@@ -37,13 +36,17 @@ public class Recordings
                             ,"Probability t2"
                             ,"Probability t3"
                             ,"Probability t4"
-                            
+                            ,"Probability t5"
+                            ,"Probability t6"
+                            ,"Probability t7"
                             };
 
         string header = String.Join(",", headers);
         File.WriteAllText(file_path, header + Environment.NewLine); 
 
-        dataset_path += $"train_{data_collection}.csv";
+        dataset_path += $"train - {data_collection}.csv";
+
+        Debug.Log($"Recording to {dataset_path} ...");
     }
 
      
@@ -71,7 +74,10 @@ public class Recordings
                             probs[i][1],
                             probs[i][2],
                             probs[i][3],
-                            probs[i][4]
+                            probs[i][4],
+                            probs[i][5],
+                            probs[i][6],
+                            probs[i][7]
                         }; 
 
             string res = now + "," + String.Join(delimiter, output);

@@ -51,14 +51,15 @@ public class Calculations
 
     int frame_rate = 90;
     int resample_freq = 100;
-    public int n_targets = 5;
+    public int n_targets = 8;
     int n_features = 5; 
     int test_size = 110;
 
     public Calculations(bool flag)
     {
         if (flag)
-            dataset_path = @"Assets/Datasets/train - multiple start.csv";
+            dataset_path = @"Assets/Datasets/train - simple agent.csv";
+        Debug.Log($"Training from {dataset_path} ...");
     }
 
     void CSVParser()
@@ -70,12 +71,13 @@ public class Calculations
             List <float> rotation_tmp = new List<float>();
             List <float> target_tmp = new List<float>();
 
-            var id_prev = "0";
+            var id_prev = "1";
             while (!reader.EndOfStream)
             {
                 var line = reader.ReadLine(); // read each line of file
                 var values = line.Split(',');
-                var id = values[0]; // take the first element as id of tial
+                // first element is timestamp
+                var id = values[1]; // take the first element as id of tial
                 if (id_prev != id) // to seperate each trial
                 {   
                     rec_positions.Add(position_tmp); // add list of the (x,y,z) for each time step to rec_positions after each trial
@@ -87,12 +89,12 @@ public class Calculations
                 }
                 id_prev = id;
 
-                float[] new_values = new float[values.Length-1]; // set a new array dropping the id
+                float[] new_values = new float[values.Length-2]; // set a new array dropping the id
                 float out_val = 0.0f;
-                for (int i = 1; i < values.Length; i++) // convert each element of each line to float
+                for (int i = 2; i < values.Length; i++) // convert each element of each line to float
                 {
                     if (float.TryParse(values[i], out out_val)) 
-                        new_values[i-1] = float.Parse(values[i]);
+                        new_values[i-2] = float.Parse(values[i]);
                 }
                 
                 position_tmp.Add(new float[] {new_values[0], new_values[1], new_values[2]}); // add (x,y,z) of each time step to temporary file
@@ -109,8 +111,8 @@ public class Calculations
     {   // control the output of CSVParser
         Debug.Log("Total number of trials: " + targets.Count);
 
-        List<int> unique_targets = new List<int>(); //finding unique targets (in this case: 0 to 4)
-        for(int i=0; i<targets.Count; i++)
+        List<int> unique_targets = new List<int>(); //finding unique targets (in this case: 0 to 7)
+        for(int i = 0; i < targets.Count; i++)
             unique_targets.Add((int) (targets[i].Last()));
         unique_targets.Sort();
 
@@ -266,23 +268,22 @@ public class Calculations
 
         int min_id = test_size;
         for (int i = 0; i < rec_positions.Count; i++)
-            if (rec_positions[i].Count < test_size)
+            if (rec_positions[i].Count < test_size && 
+                rec_positions[i].Count > 10)
                 test_size = rec_positions[i].Count;
 
         for (int i = 0; i < rec_positions.Count; i++)
         {
+            if (rec_positions[i].Count < test_size)
+                    // add interpolate
+                    continue;
+
             List <float> x = new List<float>();
             List <float> z = new List<float>();
             for (int j = 0; j < rec_positions[i].Count; j++)
             {
-                if (rec_positions[i].Count < test_size)
-                    // add interpolate
-                    continue;
-                else 
-                {
-                    x.Add(rec_positions[i][j][0]);
-                    z.Add(rec_positions[i][j][2]);
-                }
+                x.Add(rec_positions[i][j][0]);
+                z.Add(rec_positions[i][j][2]);
             }
             var downsampling_x = Downsampling(x.ToArray(), test_size); 
             var downsampling_z = Downsampling(z.ToArray(), test_size); 
@@ -898,25 +899,18 @@ public class Calculations
     void CalculateDet()
     {
         // traversing each target
-        for(int i=0; i<variance.Count; i++)
+        for(int i = 0; i < variance.Count; i++)
         {
             List<float> det_temp = new List<float>();
             // traversing each time step
-            for(int j=0; j<variance[i].Count; j++)
+            for(int j = 0; j < variance[i].Count; j++)
             {   // deep copy the variance
                 float [,] m = variance[i][j].Clone() as float[,];
 
                 // instance the class and calculate determinant
                 MInverse dett = new MInverse();
                 float _det = dett.determinant(m, n_features);
-                det_temp.Add(_det);
-
-                // ignore
-                // if (Double.IsNaN(_det))
-                //     det_temp.Add(0);
-                // else 
-                //     det_temp.Add(_det);
-                
+                det_temp.Add(_det);                
             }
             determinant.Add(det_temp);
         }
@@ -967,7 +961,7 @@ public class Calculations
         if (determinant[id][near] == 0)
             return 0;
 
-        int N = n_targets;
+        int N = n_features;
         float[] arr = new float[]{
                         positions[k].x,
                         positions[k].z,
@@ -975,18 +969,18 @@ public class Calculations
                         velocities[k].x,
                         velocities[k].z};
         float [] new_arr = new float[N];
-        for (int i=0; i < N; i++)
+        for (int i = 0; i < N; i++)
         {
             float temp = 0.0f;
-            for(int j=0; j < N; j++)
-            {
+            for(int j = 0; j < N; j++)
+            {   
                 temp += (arr[j]-mean[id][near][j]) * inverse_variance[id][near][j, i]; 
             }
             new_arr[i] = temp;
         }
 
         float res = 0.0f;
-        for (int i=0; i < N; i++)
+        for (int i = 0; i < N; i++)
             res += new_arr[i] * (arr[i]-mean[id][near][i]);
 
         return res;
@@ -1093,9 +1087,18 @@ public class Calculations
                                List<Vector3> velocities, 
                                List<float> rotations)
     {   
+        int max_id = 0;
+        float max_value = float.NegativeInfinity;
         var probabilities = CalculateProb(positions, velocities, rotations);
-        
-        int max_id = probabilities.IndexOf(probabilities.Max());
+        for (int i = 0; i < probabilities.Count; i++)
+            if (probabilities[i] < 0 && 
+                probabilities[i] > max_value)
+                {
+                    max_value = probabilities[i];
+                    max_id = i;
+                }
+                
+        // int max_id = probabilities.IndexOf(probabilities.Max());
 
 
         if (max_id != last_target_id)

@@ -6,49 +6,25 @@ using UnityEngine.AI;
 
 public class Manager : MonoBehaviour
 {
+    public bool AgentMode; 
     public BodyController body_controller;
-    public Recordings recordings;
+    // public Recordings recordings;
     public PathManager path_manager;
-    public LineRenderer line;
-    private NavMeshAgent nav_agent;
+    // public LineRenderer line;
+    // private NavMeshAgent nav_agent;
 
 
     public string data_collection;
 
-    void Setup()
-    {
-        path_manager.addStepVariation = false; 
-        body_controller.agent_mode = true;
-
-        
-        if (body_controller.agent_mode)
-            data_collection = DataCollection.SimpleAgent;
-        else           
-            data_collection = DataCollection.Hand;
-
-        Debug.Log("data collection org " + DataCollection.SimpleAgent);
-    }
-
-    // Start is called before the first frame update
     void Start()
     {   
         Setup();
-        
     }
 
-    // Update is called once per frame
     void Update()
     {   
-
         TargetVisualization();      
     }   
-
-    // void PathVisualization()
-    // {
-    //     var path = nav_agent.path.corners;
-    //     line.positionCount = path.Length;
-    //     line.SetPositions(path);
-    // }
 
     void TargetVisualization()
     {
@@ -58,12 +34,31 @@ public class Manager : MonoBehaviour
             var targets = body_controller.targets;
             for(int i = 0; i < targets.Length; i++)
             {   
-                // Debug.Log($"in {i} with pro " + probability[i]);
                 targets[i].GetComponent<Renderer>().material.color = new Color(0.5f + Math.Abs(probability[i]), 
                                                                                0.0f + Math.Abs(probability[i]) * 2,
                                                                                0.0f); //- Math.Abs(probability[i])
             } 
         }
+    }
+
+    void Setup()
+    {
+        path_manager.addStepVariation = false; 
+        
+
+        
+        if (AgentMode) 
+        {
+            body_controller.agent_mode = true;
+            data_collection = DataCollection.SimpleAgent;
+        }
+        else           
+        {
+            body_controller.agent_mode = false;
+            data_collection = DataCollection.Hand;
+        }
+
+        Debug.Log("Library method: " + data_collection);
     }
 }
 

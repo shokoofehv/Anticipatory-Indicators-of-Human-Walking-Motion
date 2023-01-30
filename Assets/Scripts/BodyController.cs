@@ -13,14 +13,13 @@ using UnityEngine.AI;
 public class BodyController : MonoBehaviour
 {
     public bool agent_mode = true;
-    public bool random_initial_position_flag = true;
+    private bool random_initial_position_flag = true;
 
     public float speed = 1e6f; 
     public Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
     int last_target_id;
-    public Transform goal;
 
     List <Vector3> positions = new List <Vector3>();  
     List <Vector3> velocities = new List <Vector3>();  
@@ -44,24 +43,28 @@ public class BodyController : MonoBehaviour
         initial_position = transform.position;
 
         rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true;
-
-        cal = new Calculations(random_initial_position_flag);
-        cal.Train();
-        n_targets = cal.n_targets; 
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        // rb.freezeRotation = true;
 
         rec = new Recordings(manager.data_collection);
         
+        cal = new Calculations(random_initial_position_flag); //manager.data_collection
+        cal.Train();
+        n_targets = cal.n_targets; 
+
         targets = new GameObject[n_targets];
         for ( int i = 0; i < n_targets; i++)
+        {
             targets[i] = GameObject.Find("Target " + i);
-        
+            Debug.Log($"Target {i} is found.");
+        }
+
         if (agent_mode)
         {
-            Debug.Log("In Agent Mode");
             agent = GetComponent<NavMeshAgent>();
             agent.enabled = true;
-            // agent.destination = goal.position; 
+            if (agent != null)
+                Debug.Log("In Agent Mode");
         }
 
     }
@@ -74,7 +77,10 @@ public class BodyController : MonoBehaviour
         rb.MovePosition(curr_pos + tempVect);
         Vector3 velocity = VelocityCal();
         float yaw = head.head_orientation;
+        // BodyRotate();
+        
 
+        // List<float> probability = new List<float>();
         probability = cal.CalculateOnRun(positions, velocities, rotations);
 
         UpdatePositionList(curr_pos, velocity, yaw, probability);
@@ -92,17 +98,11 @@ public class BodyController : MonoBehaviour
 
     void Reset()
     {
-        rec.SavetoCSV(positions, rotations, probabilities, last_target_id);
+        if (positions.Count > 10)
+            rec.SavetoCSV(positions, rotations, probabilities, last_target_id);
         
-        if (random_initial_position_flag)
-        {
-            int i = PickRandom();
-            transform.position = new Vector3 (targets[i].transform.position.x,
-                                              initial_position.y,
-                                              initial_position.z);
-        }
-        else
-            transform.position = initial_position;
+        transform.position = initial_position;
+        // transform.rotation = Random.rotation;
 
         int selected_target = PickRandom();
         if(agent_mode)
@@ -128,8 +128,16 @@ public class BodyController : MonoBehaviour
                 Debug.Log(str);
                 break;
             }
-
+        
         Reset();
+    }
+
+    void BodyRotate()
+    {   
+        float magnitude = (float) Math.Sqrt(Math.Pow(movement.x, 2) + Math.Pow(movement.z, 2));
+        float direction = (float) Mathf.Acos(movement.x / magnitude);
+        float direction_deg = Mathf.Deg2Rad * direction;
+        transform.rotation = Quaternion.AngleAxis(direction_deg, Vector3.up);
     }
 
     Vector3 OnMove()

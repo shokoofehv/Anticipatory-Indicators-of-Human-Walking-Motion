@@ -7,6 +7,9 @@ using UnityEngine.AI;
 public class Manager : MonoBehaviour
 {
     public bool AgentMode; 
+    public bool BodyTorso;
+    public float HeadRotationRate;
+
     public BodyController body_controller;
     // public Recordings recordings;
     public PathManager path_manager;
@@ -34,9 +37,12 @@ public class Manager : MonoBehaviour
             var targets = body_controller.targets;
             for(int i = 0; i < targets.Length; i++)
             {   
-                targets[i].GetComponent<Renderer>().material.color = new Color(0.5f + Math.Abs(probability[i]), 
-                                                                               0.0f + Math.Abs(probability[i]) * 2,
-                                                                               0.0f); //- Math.Abs(probability[i])
+                if (probability[i] == 0)
+                    targets[i].GetComponent<Renderer>().material.color = new Color(0.5f, 0.5f, 0.5f);
+                else 
+                    targets[i].GetComponent<Renderer>().material.color = new Color(1.0f - Math.Abs(probability[i]), 
+                                                                                   1.0f - Math.Abs(probability[i]) * 2,
+                                                                                   1.0f - Math.Abs(probability[i]) * 2); 
             } 
         }
     }

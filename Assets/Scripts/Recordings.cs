@@ -30,6 +30,7 @@ public class Recordings
                             ,"y"
                             ,"z"
                             ,"Rotation"
+                            ,"Body Rotation"
                             ,"Target"
                             ,"Probability t0"
                             ,"Probability t1"
@@ -52,23 +53,24 @@ public class Recordings
      
     public void SavetoCSV(List <Vector3> positions 
                         , List <float> yaws 
+                        , List <float> body_rotations
                         , List <List <float>> probs
                         , int target_id
                     )
     {   
         var now = DateTime.Now.ToString();
 
-        Debug.Log("path " + path_id + " is saved.");
         string delimiter = ","; 
 
         for (int i = 0; i < positions.Count; i++)
-        {
+        {   
             float[] output = {
                             path_id,
                             positions[i].x,
                             positions[i].y,
                             positions[i].z,
                             yaws[i],
+                            body_rotations[i],
                             target_id,
                             probs[i][0],
                             probs[i][1],
@@ -86,6 +88,7 @@ public class Recordings
 
         }
 
+        Debug.Log("path " + path_id + " is saved.");
         if (path_id == 750)
             UnityEditor.EditorApplication.isPlaying = false;
         
@@ -93,4 +96,5 @@ public class Recordings
         
     }
 
+    
 }

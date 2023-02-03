@@ -10,12 +10,14 @@ using System;
 public class Calculations
 {
     string dataset_path = @"Assets/Datasets/train.csv";
-    bool debug_mode = false;
+    bool debug_mode = true;
 
     List <List <float[]>> rec_positions = new List <List <float[]>>(); //variable for the recordings from the csv 
                                                                        //containing each trial -> each time step -> (x, y, z)
     List <List <float>> rec_rotations = new List <List <float>>(); //variable for the recordings from the csv 
                                                                    //containing each trial -> each time step -> yaw
+    List <List <float>> rec_brotations = new List <List <float>>(); //variable for the recordings from the csv 
+                                                                   //containing each trial -> each time step -> body rotation
     List <List <float>> targets = new List <List <float>>(); //variable for the recordings from the csv 
                                                              //containing each trial -> each time step -> target
     
@@ -23,6 +25,8 @@ public class Calculations
                                                                             //containing each trial -> each time step -> (x,z)
     List <List <float>> resample_rotations = new List <List <float>>(); //variable after resampling the recordings 
                                                                         //containing each trial -> each time step -> yaw
+    List <List <float>> resample_brotations = new List <List <float>>(); //variable after resampling the recordings 
+                                                                        //containing each trial -> each time step -> body rotation
     List <List <float>> resample_targets = new List <List <float>>(); //variable after resampling the recordings 
                                                                       //containing each trial -> each time step -> target
     List <List <float[]>> velocity = new List <List <float[]>>(); //calculating the velocity from resampled positions 
@@ -38,6 +42,7 @@ public class Calculations
     List<List<float>> aligned_vz = new List<List<float>>(); //aligned array of vz_vect after DTW
     List<List<float>> aligned_t = new List<List<float>>(); //aligned array of resample_targets after DTW
     List<List<float>> aligned_rot = new List<List<float>>(); //aligned array of resample_rotations after DTW
+    List<List<float>> aligned_brot = new List<List<float>>(); //aligned array of resample_brotations after DTW
 
     List<List<float[]>> mean = new List<List<float[]>>(); // mean of multivariate Gaussian distribution for each feature  
                                                           // at each time step in each trial
@@ -54,9 +59,16 @@ public class Calculations
     public int n_targets = 8;
     int n_features = 5; 
     int test_size = 110;
+    bool body_torso;
 
-    public Calculations(bool flag)
-    {
+    public Calculations(bool BodyTorso, bool flag)
+    {   
+        if (BodyTorso)
+        {
+            body_torso = BodyTorso;
+            n_features = 6;
+        }
+        
         if (flag)
             dataset_path = @"Assets/Datasets/train - simple agent.csv";
         Debug.Log($"Training from {dataset_path} ...");
@@ -69,9 +81,10 @@ public class Calculations
         {
             List <float[]> position_tmp = new List<float[]>();
             List <float> rotation_tmp = new List<float>();
+            List <float> brotation_tmp = new List<float>();
             List <float> target_tmp = new List<float>();
 
-            var id_prev = "1";
+            var id_prev = "0";
             while (!reader.EndOfStream)
             {
                 var line = reader.ReadLine(); // read each line of file
@@ -82,14 +95,17 @@ public class Calculations
                 {   
                     rec_positions.Add(position_tmp); // add list of the (x,y,z) for each time step to rec_positions after each trial
                     rec_rotations.Add(rotation_tmp); // add list of the yaw for each time step to rec_positions after each trial
+                    rec_brotations.Add(brotation_tmp); // add list of the body rotation for each time step to rec_positions after each trial
                     targets.Add(target_tmp); // add list of the targets for each time step to rec_positions after each trial
+                    
                     position_tmp = new List<float[]>(); // clear the temporary list of positions for each time step 
                     rotation_tmp = new List<float>(); // clear the temporary list of rotations for each time step
+                    brotation_tmp = new List<float>(); // clear the temporary list of brotations for each time step
                     target_tmp = new List<float>(); // clear the temporary list of targets for each time step
                 }
                 id_prev = id;
 
-                float[] new_values = new float[values.Length-2]; // set a new array dropping the id
+                float[] new_values = new float[values.Length-2]; // set a new array dropping the timestamp and id
                 float out_val = 0.0f;
                 for (int i = 2; i < values.Length; i++) // convert each element of each line to float
                 {
@@ -99,10 +115,12 @@ public class Calculations
                 
                 position_tmp.Add(new float[] {new_values[0], new_values[1], new_values[2]}); // add (x,y,z) of each time step to temporary file
                 rotation_tmp.Add(new_values[3]); // add yaw of each time step to temporary file
-                target_tmp.Add(new_values[4]); // add target of each time step to temporary file
+                brotation_tmp.Add(new_values[4]); // add body rotation of each time step to temporary file
+                target_tmp.Add(new_values[5]); // add target of each time step to temporary file
             }
             rec_positions.Add(position_tmp); // add the temp list at the end of the file
             rec_rotations.Add(rotation_tmp); // add the temp list at the end of the file
+            rec_brotations.Add(brotation_tmp); // add the temp list at the end of the file
             targets.Add(target_tmp); // add the temp list at the end of the file
         }
     }
@@ -112,8 +130,8 @@ public class Calculations
         Debug.Log("Total number of trials: " + targets.Count);
 
         List<int> unique_targets = new List<int>(); //finding unique targets (in this case: 0 to 7)
-        for(int i = 0; i < targets.Count; i++)
-            unique_targets.Add((int) (targets[i].Last()));
+        for(int i = 0; i < targets.Count; i++) {
+            unique_targets.Add((int) (targets[i].Last())); } 
         unique_targets.Sort();
 
         var q = from x in unique_targets //finding the count of each distinct target
@@ -264,6 +282,7 @@ public class Calculations
 
         List <List <float[]>> positions_temp = new List <List <float[]>>(); 
         List <List <float>> rotations_temp = new List <List <float>>(); 
+        List <List <float>> brotations_temp = new List <List <float>>(); 
         List <List <float>> targets_temp = new List <List <float>>(); 
 
         int min_id = test_size;
@@ -288,6 +307,7 @@ public class Calculations
             var downsampling_x = Downsampling(x.ToArray(), test_size); 
             var downsampling_z = Downsampling(z.ToArray(), test_size); 
             var downsampling_rot = Downsampling(rec_rotations[i].ToArray(), test_size); 
+            var downsampling_brot = Downsampling(rec_brotations[i].ToArray(), test_size); 
             var downsampling_target = Downsampling(targets[i].ToArray(), test_size); 
 
             List <float[]> downsampled = new List <float[]>();
@@ -296,10 +316,12 @@ public class Calculations
             
             positions_temp.Add(downsampled);
             rotations_temp.Add(new List <float> (downsampling_rot));
+            brotations_temp.Add(new List <float> (downsampling_brot));
             targets_temp.Add(new List <float> (downsampling_target));
         }
         rec_positions = positions_temp;
         rec_rotations = rotations_temp;
+        rec_brotations = brotations_temp;
         targets = targets_temp;
     }
 
@@ -709,6 +731,7 @@ public class Calculations
                 float x = 0.0f;
                 float z = 0.0f;
                 float yaw = 0.0f;
+                float byaw = 0.0f;
                 float v_x = 0.0f;
                 float v_z = 0.0f;
 
@@ -718,10 +741,14 @@ public class Calculations
                     x += aligned_x[id][k] / n_dem;
                     z += aligned_z[id][k] / n_dem;
                     yaw += aligned_rot[id][k] / n_dem;
+                    byaw += aligned_brot[id][k] / n_dem;
                     v_x += aligned_vx[id][k] / n_dem;
                     v_z += aligned_vz[id][k] / n_dem;
                 }
-                mean_temp.Add(new float[]{x, z, yaw, v_x, v_z});
+                if (body_torso)
+                    mean_temp.Add(new float[]{x, z, yaw, byaw, v_x, v_z});    
+                else
+                    mean_temp.Add(new float[]{x, z, yaw, v_x, v_z});
             }
             mean.Add(mean_temp);
         }
@@ -808,13 +835,25 @@ public class Calculations
                 // for each similiar trials
                 foreach (int k in indexes)
                 {
-                    float[] arr = new float[]{
-                        aligned_x[k][j],
-                        aligned_z[k][j],
-                        aligned_rot[k][j],
-                        aligned_vx[k][j],
-                        aligned_vz[k][j]
-                    };
+                    float[] arr = new float[n_features];
+                    if (body_torso)
+                        arr = new float[]{
+                            aligned_x[k][j],
+                            aligned_z[k][j],
+                            aligned_rot[k][j],
+                            aligned_brot[k][j],
+                            aligned_vx[k][j],
+                            aligned_vz[k][j]
+                        };
+                    else 
+                        arr = new float[]{
+                            aligned_x[k][j],
+                            aligned_z[k][j],
+                            aligned_rot[k][j],
+                            aligned_vx[k][j],
+                            aligned_vz[k][j]
+                        };
+
                     float[] point_diff = new float[n_features];
                     float[,] mult_res = new float[n_features, n_features];
 
@@ -860,13 +899,14 @@ public class Calculations
     void CalculateInverse()
     {
         // for each target        
-        for (int i=0; i<variance.Count; i++)
+        for (int i = 0; i < variance.Count; i++)
         {
             List<float[,]> i_var_temp = new List<float[,]>();
 
             // at each time step
             for (int j = 0; j < variance[i].Count; j++)
             {
+                Debug.Log("n_features " + n_features);
                 float [,] _i_var = new float[n_features, n_features];
 
                 // calculating the inverse matrix
@@ -880,6 +920,7 @@ public class Calculations
 
     void CalculateInverseControl()
     {
+        Debug.Log(inverse_variance[0][0].GetLength(0) + " " + inverse_variance[0][0].GetLength(1));
         using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/inverse variance.csv"))
         {
             for (int t = 0; t < inverse_variance.Count; t++)
@@ -887,8 +928,9 @@ public class Calculations
                 {
                     string res = t + ",";
                     for(int ii = 0; ii < n_features; ii++)
-                        for(int jj = 0; jj < n_features; jj++)
-                            res += inverse_variance[t][i][ii, jj] + ",";
+                        for(int jj = 0; jj < n_features; jj++) { 
+                            Debug.Log(ii + " " + jj + " " + t + " " + i + " " + n_features);
+                            res += inverse_variance[t][i][ii, jj] + ","; } 
 
                     res += "\n";
                     file.Write(res);
@@ -956,18 +998,31 @@ public class Calculations
     float CalculateDeltaVar(int id, int k, int near,
                             List<Vector3> positions, 
                             List<Vector3> velocities, 
-                            List<float> rotations)
+                            List<float> rotations,
+                            List<float> brotations)
     {
         if (determinant[id][near] == 0)
             return 0;
 
         int N = n_features;
-        float[] arr = new float[]{
-                        positions[k].x,
-                        positions[k].z,
-                        rotations[k],
-                        velocities[k].x,
-                        velocities[k].z};
+
+        float[] arr = new float[N];
+        if (body_torso)
+            arr = new float[]{
+                            positions[k].x,
+                            positions[k].z,
+                            rotations[k],
+                            brotations[k],
+                            velocities[k].x,
+                            velocities[k].z};
+        else
+            arr = new float[]{
+                            positions[k].x,
+                            positions[k].z,
+                            rotations[k],
+                            velocities[k].x,
+                            velocities[k].z};
+
         float [] new_arr = new float[N];
         for (int i = 0; i < N; i++)
         {
@@ -1005,7 +1060,8 @@ public class Calculations
 
     List <float> CalculateProb(List<Vector3> positions, 
                                List<Vector3> velocities, 
-                               List<float> rotations)
+                               List<float> rotations,
+                               List<float> brotations)
     {
         List <float> target_pro = new List<float>();
 
@@ -1020,7 +1076,7 @@ public class Calculations
             {
                 int k = FindNearest(positions[j], i);
 
-                var delta_var_delta = - 0.5 * CalculateDeltaVar(i, j, k, positions, velocities, rotations);
+                var delta_var_delta = - 0.5 * CalculateDeltaVar(i, j, k, positions, velocities, rotations, brotations);
                 var g = G_term(i, k);
                 
                 temp += (double) ((g + delta_var_delta) / positions.Count);
@@ -1045,15 +1101,17 @@ public class Calculations
             List<Vector3> positions = new List<Vector3>();
             List<Vector3> velocities = new List<Vector3>();
             List<float> rotations = new List<float>();
+            List<float> brotations = new List<float>();
 
             for (int i = 0; i < time_step; i++)
             {
                 positions.Add(new Vector3(aligned_x[tr][i], 0, aligned_z[tr][i])); 
                 velocities.Add(new Vector3(aligned_vx[tr][i], 0, aligned_vz[tr][i]));
                 rotations.Add(aligned_rot[tr][i]);
+                brotations.Add(aligned_brot[tr][i]);
             }
 
-            var probabilities = CalculateProb(positions, velocities, rotations);
+            var probabilities = CalculateProb(positions, velocities, rotations, brotations);
             List<float> p_normalized = new List<float>();
 
 
@@ -1085,11 +1143,12 @@ public class Calculations
 
     public List <float> CalculateOnRun(List<Vector3> positions, 
                                List<Vector3> velocities, 
-                               List<float> rotations)
+                               List<float> rotations,
+                               List<float> brotations)
     {   
         int max_id = 0;
         float max_value = float.NegativeInfinity;
-        var probabilities = CalculateProb(positions, velocities, rotations);
+        var probabilities = CalculateProb(positions, velocities, rotations, brotations);
         for (int i = 0; i < probabilities.Count; i++)
             if (probabilities[i] < 0 && 
                 probabilities[i] > max_value)
@@ -1097,9 +1156,8 @@ public class Calculations
                     max_value = probabilities[i];
                     max_id = i;
                 }
-                
-        // int max_id = probabilities.IndexOf(probabilities.Max());
 
+        // int max_id = probabilities.IndexOf(probabilities.Max());
 
         if (max_id != last_target_id)
         {
@@ -1126,8 +1184,8 @@ public class Calculations
         {
             CSVParser();
             CSVParserControl();
-            RemoveDuplicates();
-            RemoveDuplicatesControl();
+            // RemoveDuplicates();
+            // RemoveDuplicatesControl();
             Downsample();
             DownsampleControl();
             // Resample();
@@ -1135,6 +1193,7 @@ public class Calculations
 
             resample_positions = rec_positions;  
             resample_rotations = rec_rotations;
+            resample_brotations = rec_brotations;
             resample_targets = targets;
 
             Velocity();
@@ -1144,6 +1203,7 @@ public class Calculations
             aligned_x = x_vect;
             aligned_z = z_vect;
             aligned_rot = resample_rotations;
+            aligned_brot = resample_brotations;
             aligned_t = resample_targets;
             aligned_vx = vx_vect;
             aligned_vz = vz_vect;
@@ -1167,6 +1227,7 @@ public class Calculations
 
             resample_positions = rec_positions;  
             resample_rotations = rec_rotations;
+            resample_brotations = rec_brotations;
             resample_targets = targets;
 
             Velocity();
@@ -1175,6 +1236,7 @@ public class Calculations
             aligned_x = x_vect;
             aligned_z = z_vect;
             aligned_rot = resample_rotations;
+            aligned_brot = resample_brotations;
             aligned_t = resample_targets;
             aligned_vx = vx_vect;
             aligned_vz = vz_vect;
@@ -1449,7 +1511,7 @@ class MDeterminant {
 // class matrix inverse
 class MInverse
 {
-	int N = 5;
+	int N = 6;
 
     // Function to get cofactor of A[p,q] in [,]temp. n is current
     // dimension of [,]A
@@ -1484,6 +1546,7 @@ class MInverse
     n is current dimension of [,]A. */
     public float determinant(float [,] A, int n)
     {
+        // N = A.GetLength(0);
     	float D = 0; // Initialize result
 
     	// Base case : if matrix contains single element
@@ -1510,6 +1573,7 @@ class MInverse
     // Function to get adjoint of A[N,N] in adj[N,N].
     void adjoint(float [,] A, float [,] adj)
     {
+        N = A.GetLength(0);
     	if (N == 1)
     	{
     		adj[0, 0] = 1;
@@ -1541,7 +1605,8 @@ class MInverse
     // Function to calculate and store inverse, returns false if
     // matrix is singular
     public float [,] Inverse(float [,] A)
-    {
+    {   
+        N = A.GetLength(0);
         float [,] inverse = new float[N, N];
     	// Find determinant of [,]A
     	float det = determinant(A, N);

@@ -20,10 +20,12 @@ public class BodyController : MonoBehaviour
     private Rigidbody rb;
     Vector3 movement;
     int last_target_id;
+    private Quaternion last_rotation;
 
     List <Vector3> positions = new List <Vector3>();  
     List <Vector3> velocities = new List <Vector3>();  
     List <float> rotations = new List <float>();  
+    List <float> body_rotations = new List <float>();  
     List <List <float>> probabilities = new List <List <float>>();  
 
     public Manager manager;
@@ -37,6 +39,7 @@ public class BodyController : MonoBehaviour
 
     public List<float> probability;
     public int n_targets;
+    public float head_rotation_rate; 
 
     void Start()
     {
@@ -48,7 +51,7 @@ public class BodyController : MonoBehaviour
 
         rec = new Recordings(manager.data_collection);
         
-        cal = new Calculations(random_initial_position_flag); //manager.data_collection
+        cal = new Calculations(manager.BodyTorso, random_initial_position_flag); //manager.data_collection
         cal.Train();
         n_targets = cal.n_targets; 
 
@@ -67,6 +70,7 @@ public class BodyController : MonoBehaviour
                 Debug.Log("In Agent Mode");
         }
 
+        head_rotation_rate = manager.HeadRotationRate;
     }
 
     void Update()
@@ -75,15 +79,18 @@ public class BodyController : MonoBehaviour
         movement = OnMove();
         Vector3 tempVect = speed * movement * Time.deltaTime; 
         rb.MovePosition(curr_pos + tempVect);
+
         Vector3 velocity = VelocityCal();
+
         float yaw = head.head_orientation;
-        // BodyRotate();
-        
 
-        // List<float> probability = new List<float>();
-        probability = cal.CalculateOnRun(positions, velocities, rotations);
+        BodyRotate();
+        float body_rotation = transform.rotation.eulerAngles.y;
 
-        UpdatePositionList(curr_pos, velocity, yaw, probability);
+        // probability = new List<float>();
+        probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
+
+        UpdatePositionList(curr_pos, velocity, yaw, body_rotation, probability);
 
         if (Input.GetKeyDown(KeyCode.R)) 
             Reset();
@@ -99,10 +106,10 @@ public class BodyController : MonoBehaviour
     void Reset()
     {
         if (positions.Count > 10)
-            rec.SavetoCSV(positions, rotations, probabilities, last_target_id);
-        
+            rec.SavetoCSV(positions, rotations, body_rotations, probabilities, last_target_id);
+
         transform.position = initial_position;
-        // transform.rotation = Random.rotation;
+        transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
 
         int selected_target = PickRandom();
         if(agent_mode)
@@ -111,6 +118,7 @@ public class BodyController : MonoBehaviour
         positions = new List <Vector3>();  
         velocities = new List <Vector3>();  
         rotations = new List <float>();  
+        body_rotations = new List <float>();  
         probabilities = new List <List <float>>(); 
         Debug.Log("New path started.");
 
@@ -134,10 +142,18 @@ public class BodyController : MonoBehaviour
 
     void BodyRotate()
     {   
-        float magnitude = (float) Math.Sqrt(Math.Pow(movement.x, 2) + Math.Pow(movement.z, 2));
-        float direction = (float) Mathf.Acos(movement.x / magnitude);
-        float direction_deg = Mathf.Deg2Rad * direction;
-        transform.rotation = Quaternion.AngleAxis(direction_deg, Vector3.up);
+        Quaternion targetRotation;
+        if (movement == Vector3.zero) // handle the standing and not moving
+            targetRotation = last_rotation;
+
+        else 
+            targetRotation = Quaternion.LookRotation(movement);
+
+        targetRotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    targetRotation,
+                    360 * Time.fixedDeltaTime);
+        rb.MoveRotation(targetRotation);
     }
 
     Vector3 OnMove()
@@ -148,11 +164,12 @@ public class BodyController : MonoBehaviour
         return Vector3.ClampMagnitude(movement, 1);
     }
 
-    void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, List <float> probability)
+    void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, float body_rotation, List <float> probability)
     {
         positions.Add(new_position);
         velocities.Add(new_velocity);
         rotations.Add(yaw);
+        body_rotations.Add(body_rotation);
         probabilities.Add(probability);
     }
 

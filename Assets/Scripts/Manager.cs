@@ -9,7 +9,8 @@ public class Manager : MonoBehaviour
     public bool AgentMode; 
     public bool BodyTorso;
     public float HeadRotationRate;
-
+    public bool Replay;
+    
     public BodyController body_controller;
     // public Recordings recordings;
     public PathManager path_manager;

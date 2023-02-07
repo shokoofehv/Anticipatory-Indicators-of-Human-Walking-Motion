@@ -74,7 +74,7 @@ public class Calculations
         Debug.Log($"Training from {dataset_path} ...");
     }
 
-    void CSVParser()
+    public void CSVParser()
     {   // reading from path csv and adding the data to rec_positions, rec_rotations and targets
         // each line contains id, x, y, z, yaw, target
         using(var reader = new StreamReader(dataset_path))
@@ -906,7 +906,7 @@ public class Calculations
             // at each time step
             for (int j = 0; j < variance[i].Count; j++)
             {
-                Debug.Log("n_features " + n_features);
+                // Debug.Log("n_features " + n_features);
                 float [,] _i_var = new float[n_features, n_features];
 
                 // calculating the inverse matrix
@@ -920,7 +920,7 @@ public class Calculations
 
     void CalculateInverseControl()
     {
-        Debug.Log(inverse_variance[0][0].GetLength(0) + " " + inverse_variance[0][0].GetLength(1));
+        // Debug.Log(inverse_variance[0][0].GetLength(0) + " " + inverse_variance[0][0].GetLength(1));
         using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"Assets/Log/inverse variance.csv"))
         {
             for (int t = 0; t < inverse_variance.Count; t++)
@@ -929,7 +929,7 @@ public class Calculations
                     string res = t + ",";
                     for(int ii = 0; ii < n_features; ii++)
                         for(int jj = 0; jj < n_features; jj++) { 
-                            Debug.Log(ii + " " + jj + " " + t + " " + i + " " + n_features);
+                            // Debug.Log(ii + " " + jj + " " + t + " " + i + " " + n_features);
                             res += inverse_variance[t][i][ii, jj] + ","; } 
 
                     res += "\n";
@@ -1002,7 +1002,8 @@ public class Calculations
                             List<float> brotations)
     {
         if (determinant[id][near] == 0)
-            return 0;
+            return -999;
+            // return 0;
 
         int N = n_features;
 
@@ -1038,7 +1039,7 @@ public class Calculations
         for (int i = 0; i < N; i++)
             res += new_arr[i] * (arr[i]-mean[id][near][i]);
 
-        return res;
+        return -0.5f * res;
     }
     
     double G_term(int i, int k)
@@ -1046,7 +1047,8 @@ public class Calculations
         int N_f = n_features;
         var det = Math.Abs(determinant[i][k]);
         if (det == 0)
-            return 0;
+            return -999;
+            // return 0;
 
         int exponent = det == 0 ? 0 : (int) Math.Floor((Math.Log10(det)));
         var mantissa = det * Math.Pow(10, -exponent);
@@ -1076,7 +1078,7 @@ public class Calculations
             {
                 int k = FindNearest(positions[j], i);
 
-                var delta_var_delta = - 0.5 * CalculateDeltaVar(i, j, k, positions, velocities, rotations, brotations);
+                var delta_var_delta = CalculateDeltaVar(i, j, k, positions, velocities, rotations, brotations);
                 var g = G_term(i, k);
                 
                 temp += (double) ((g + delta_var_delta) / positions.Count);
@@ -1158,6 +1160,9 @@ public class Calculations
                 }
 
         // int max_id = probabilities.IndexOf(probabilities.Max());
+        var sum_list = Math.Abs(probabilities.Sum());
+        var p_normalized = probabilities.Select(x => x/sum_list).ToArray();
+        probabilities = new List <float> (p_normalized);
 
         if (max_id != last_target_id)
         {
@@ -1166,13 +1171,10 @@ public class Calculations
             string str = "Heading target is: " + max_id + "\n" 
                          + "The probabilities are: ";
             for (int p = 0 ; p < probabilities.Count; p++) 
-                str += "Target " + p + ": " + probabilities[p] + "\t"; 
+                str += "Target " + p + ": " + probabilities[p].ToString("F3") + "\t"; 
             Debug.Log(str);
 
         }
-        var sum_list = Math.Abs(probabilities.Sum());
-        var p_normalized = probabilities.Select(x => x/sum_list).ToArray();
-        probabilities = new List <float> (p_normalized);
 
         return probabilities;
  

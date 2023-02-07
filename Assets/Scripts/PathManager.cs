@@ -56,22 +56,22 @@ public class PathManager : MonoBehaviour
         }*/
 
         //handle direct goal setting to the nav_agent
-        if (check_path && nav_agent.hasPath)
-        {
-            Vector3[] path = nav_agent.path.corners;
+        // if (check_path && nav_agent.hasPath)
+        // {
+        //     Vector3[] path = nav_agent.path.corners;
 
-            if (addStepVariation) // ToDo refer to the same parametrezation setting everywhere
-            {
+        //     if (addStepVariation) // ToDo refer to the same parametrezation setting everywhere
+        //     {
                 
-                Debug.Log("Adding step variation on PATH CHECK");
-                path = traj_toolbox.AddPathVariation(path).ToArray();
-                Debug.Log($"addStepVariation = {addStepVariation} setting qeue");
-                SetDestinationQeue(path);
-            }
+        //         Debug.Log("Adding step variation on PATH CHECK");
+        //         path = traj_toolbox.AddPathVariation(path).ToArray();
+        //         Debug.Log($"addStepVariation = {addStepVariation} setting qeue");
+        //         SetDestinationQeue(path);
+        //     }
 
-            check_path = false;
-            VisualizePath(path);
-        }
+        //     check_path = false;
+        //     VisualizePath(path);
+        // }
         // else if (nav_agent.hasPath)
         // {   
         //     Vector3[] path = nav_agent.path.corners;
@@ -81,10 +81,11 @@ public class PathManager : MonoBehaviour
         //     VisualizePath(traj_toolbox.Path);
         // }
         
-        else 
-        {
-            VisualizePath(nav_agent.path.corners);
-        }   
+        // else 
+        // {
+        //     VisualizePath(nav_agent.path.corners);
+        // }   
+        VisualizePath(nav_agent.path.corners);
 
         //ToDo ensure that there's no conflict between the qeue and nav_mesh goal
         //if there's a qeue - update 

@@ -918,7 +918,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02fbff8a04f67ac4b9c48eada471857c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AgentMode: 0
+  AgentMode: 1
   BodyTorso: 1
   HeadRotationRate: 1.2
   Replay: 0

@@ -10,7 +10,7 @@ using System;
 public class Calculations
 {
     string dataset_path = @"Assets/Datasets/train.csv";
-    bool debug_mode = true;
+    bool debug_mode = false;
 
     List <List <float[]>> rec_positions = new List <List <float[]>>(); //variable for the recordings from the csv 
                                                                        //containing each trial -> each time step -> (x, y, z)
@@ -1164,17 +1164,18 @@ public class Calculations
         var p_normalized = probabilities.Select(x => x/sum_list).ToArray();
         probabilities = new List <float> (p_normalized);
 
-        if (max_id != last_target_id)
-        {
-            last_target_id = max_id;
+        if (!Double.IsNaN(probabilities[0]))
+            if (max_id != last_target_id)
+            {
+                last_target_id = max_id;
 
-            string str = "Heading target is: " + max_id + "\n" 
-                         + "The probabilities are: ";
-            for (int p = 0 ; p < probabilities.Count; p++) 
-                str += "Target " + p + ": " + probabilities[p].ToString("F3") + "\t"; 
-            Debug.Log(str);
+                string str = "Heading target is: " + max_id + "\n" 
+                             + "The probabilities are: ";
+                for (int p = 0 ; p < probabilities.Count; p++) 
+                    str += "Target " + p + ": " + probabilities[p].ToString("F3") + "\t"; 
+                Debug.Log(str);
 
-        }
+            }
 
         return probabilities;
  
@@ -1224,6 +1225,7 @@ public class Calculations
         else
         {
             CSVParser();
+            CSVParserControl();
             // RemoveDuplicates();
             Downsample();
 

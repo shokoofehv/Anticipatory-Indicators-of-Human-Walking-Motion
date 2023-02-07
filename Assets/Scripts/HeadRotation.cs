@@ -85,7 +85,11 @@ public class HeadRotation : MonoBehaviour
                 if (diff > 40)
                 {
                     wrong_rotation = true;
-                    break;
+                    start_rotation = transform.rotation;
+                    end_rotation = body.transform.rotation;
+                    // break;
+                    // t = 0;
+                    continue;
                 }
                 yield return null;
             }

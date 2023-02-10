@@ -66,12 +66,12 @@ public class Evaluation : MonoBehaviour
             else
                 furthest_time = -1;
         }
-        string accu = (correct / (float)positions.Count).ToString("F2");
-        float timestep_ahead = (furthest_time != -1) ? 
-                               (positions.Count - furthest_time) / (float) positions.Count : 
-                                0f;
+        string accu = (correct / (float)positions.Count).ToString("F3");
+        string timestep_ahead = (furthest_time != -1) ? 
+                               ((positions.Count - furthest_time) / (float) positions.Count).ToString("F3") : 
+                                "0";
         var total = positions.Count;
-        Debug.Log($"correct: {correct} total: {total} accuracy: {accu} with {timestep_ahead} ratio ahead");
+        Debug.Log($"correct: {correct} total: {total} accuracy: {accu} with {timestep_ahead} timestep ratio ahead.");
         
         double head_rot_avg = yaws.Average();
         double head_rot_std = yaws.Select(val => (val - head_rot_avg) * (val - head_rot_avg)).Sum();

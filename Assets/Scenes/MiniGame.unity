@@ -701,7 +701,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 517441393}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &517441396
 Camera:
   m_ObjectHideFlags: 0
@@ -709,7 +709,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 517441393}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -831,7 +831,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 557040994}
-  m_Enabled: 0
+  m_Enabled: 1
 --- !u!20 &557040998
 Camera:
   m_ObjectHideFlags: 0
@@ -839,7 +839,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 557040994}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -918,13 +918,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02fbff8a04f67ac4b9c48eada471857c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AgentMode: 1
+  AgentMode: 0
   BodyTorso: 1
-  HeadRotationRate: 1.2
   Replay: 0
+  ArchTrajectory: 0
+  HandControlledDataset: 0
+  SimpleAgentDataset: 1
+  ComplexAgentDataset: 0
+  HeadRotationRate: 1.2
   body_controller: {fileID: 1668015761}
   path_manager: {fileID: 2125345438}
   data_collection: 
+  dataset: 
 --- !u!1 &755364288
 GameObject:
   m_ObjectHideFlags: 0
@@ -2383,6 +2388,7 @@ MonoBehaviour:
   traj_toolbox: {fileID: 0}
   evaluation: {fileID: 133325847}
   targets: []
+  path_manager: {fileID: 2125345438}
   probability: []
   n_targets: 0
   head_rotation_rate: 0
@@ -3193,7 +3199,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   goal_obj: {fileID: 462325442}
+  manager: {fileID: 716672437}
   traj_toolbox: {fileID: 1535339083}
+  body: {fileID: 1668015761}
   addStepVariation: 0
 --- !u!4 &2125345439
 Transform:

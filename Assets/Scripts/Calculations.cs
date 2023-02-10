@@ -61,7 +61,7 @@ public class Calculations
     int test_size = 110;
     bool body_torso;
 
-    public Calculations(bool BodyTorso, bool flag)
+    public Calculations(bool BodyTorso, string dataset, bool flag)
     {   
         if (BodyTorso)
         {
@@ -69,8 +69,8 @@ public class Calculations
             n_features = 6;
         }
         
-        if (flag)
-            dataset_path = @"Assets/Datasets/train - simple agent.csv";
+        // if (flag)
+        dataset_path = $"Assets/Datasets/train - {dataset}.csv";
         Debug.Log($"Training from {dataset_path} ...");
     }
 

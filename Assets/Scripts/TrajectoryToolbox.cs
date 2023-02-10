@@ -60,7 +60,7 @@ public class TrajectoryToolbox : MonoBehaviour
         //path = GenerateCircle(user.transform.position, user.transform.right, radius);
         //path = ExtractArchFromCircle(path, user.transform.position, angle);
         //path = GenerateZigzag(user.transform.position, user.transform.forward, 10f, 4f, 90f);
-        //path = GetConnectingArch(user.transform.position, finish_goal.position, 60f);
+        // path = GetConnectingArch(user.transform.position, finish_goal.position, 60f);
         //path = CorrectTrajectoryValidity(path);
         VisualizeTrajectory(path);
 
@@ -86,7 +86,7 @@ public class TrajectoryToolbox : MonoBehaviour
         }
 
         trajectory = CorrectTrajectoryValidity(trajectory);
-        Debug.LogWarning($"TetsGenerator: trajectory count = {trajectory.Count}");
+        Debug.LogWarning($"TestGenerator: trajectory count = {trajectory.Count}");
         if (useStepVariation && trajectory.Count > 0)
             trajectory = AddPathVariation(trajectory);
 
@@ -162,7 +162,7 @@ public class TrajectoryToolbox : MonoBehaviour
         new_path.AddRange(path_plus);
         new_path.AddRange(path_minus);
 
-        new_path = SimplifyPath(new_path);
+        // new_path = SimplifyPath(new_path);
 
         Debug.Log("Circle point count = " + new_path.Count);
 

@@ -8,10 +8,12 @@ public class PathManager : MonoBehaviour
 {
 
     public Transform goal_obj;
-    // public ClickedPathCreator clicked_path_creator;
+    public Manager manager;
     public TrajectoryToolbox traj_toolbox;
+    public BodyController body; 
+    private Transform current_target;
 
-    public bool addStepVariation = true;
+    public bool addStepVariation = false;
 
     private NavMeshAgent nav_agent;
 
@@ -26,70 +28,60 @@ public class PathManager : MonoBehaviour
     }
     private LineRenderer line_renderer;
     private Queue<Vector3> path_queue = new Queue<Vector3>();
+    private List <Vector3> path = new List <Vector3>();
 
     void Start()
     {
-        nav_agent = GetComponent<NavMeshAgent>();
-        nav_agent = GameObject.Find("User Body").GetComponent<NavMeshAgent>();
-        // if (clicked_path_creator && clicked_path_creator.drawing)
-        //     clicked_path_creator.OnNewPathCreated += SetDestinationQeue;
-        // else if (clicked_path_creator == null)
-        //     Debug.LogWarning($"clicked_path_creator at {gameObject.name} is null!");
-
-        // if (goal_obj == null)
-        //     goal_obj = GameObject.Find("Goal").transform;
-        
-        // if (line_renderer == null)
+        nav_agent = body.agent;
+        if (nav_agent == null)
+            Debug.Log("Couldn't find the nav mesh agent.");
         line_renderer = GameObject.Find("Trajectory Toolbox").GetComponent<LineRenderer>();
+
+        int selected_target = body.PickRandom();
+        current_target = body.targets[selected_target].transform;
+        
     }
 
     void Update()
     {
-        /*if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (goal_obj != null)
-            {
-                nav_agent.SetDestination(goal_obj.position);
-                CheckPath = true;
-                
-            }
-        }*/
-
-        //handle direct goal setting to the nav_agent
-        // if (check_path && nav_agent.hasPath)
-        // {
-        //     Vector3[] path = nav_agent.path.corners;
-
-        //     if (addStepVariation) // ToDo refer to the same parametrezation setting everywhere
-        //     {
-                
-        //         Debug.Log("Adding step variation on PATH CHECK");
-        //         path = traj_toolbox.AddPathVariation(path).ToArray();
-        //         Debug.Log($"addStepVariation = {addStepVariation} setting qeue");
-        //         SetDestinationQeue(path);
-        //     }
-
-        //     check_path = false;
-        //     VisualizePath(path);
-        // }
-        // else if (nav_agent.hasPath)
-        // {   
-        //     Vector3[] path = nav_agent.path.corners;
-        //     nav_agent.path.ClearCorners();
-        //     traj_toolbox.GenerateTrajectory(Trajectory_type.Arch, nav_agent.transform.position, nav_agent.destination, false);
-        //     SetDestinationQeue(traj_toolbox.Path);
-        //     VisualizePath(traj_toolbox.Path);
-        // }
         
-        // else 
-        // {
-        //     VisualizePath(nav_agent.path.corners);
-        // }   
-        VisualizePath(nav_agent.path.corners);
-
-        //ToDo ensure that there's no conflict between the qeue and nav_mesh goal
-        //if there's a qeue - update 
-        UpdateQueuedPathing();
+        if (manager.AgentMode)
+        {
+            if (manager.ArchTrajectory)
+            {        
+                if (check_path && nav_agent.hasPath)
+                {   
+                    // Vector3[] path = nav_agent.path.corners;
+    
+    
+                    nav_agent.path.ClearCorners();
+                    // path = traj_toolbox.GetConnectingArch(body.position, current_target.position, 60f);
+                    traj_toolbox.GenerateTrajectory(Trajectory_type.Arch, body.transform.position, current_target.position, false);
+                    check_path = false;
+    
+                    SetDestinationQeue(traj_toolbox.Path);
+                    VisualizePath(traj_toolbox.Path);
+                    Debug.Log("current_target.position " + current_target.position + " traj Path " + traj_toolbox.Path.Count + " check_path " + check_path);
+                }
+                else if (!nav_agent.hasPath)
+                {
+                    nav_agent.destination = current_target.position; 
+                }
+    
+                UpdateQueuedPathing();
+    
+            }
+            else 
+            {
+                if (body.reset)
+                {
+                    int selected_target = body.PickRandom();
+                    current_target = body.targets[selected_target].transform;
+                    nav_agent.destination = current_target.position; 
+                }
+                VisualizePath(nav_agent.path.corners);
+            }
+        }
     }
 
     public void SetDestinationQeue(IEnumerable<Vector3> path)
@@ -102,8 +94,8 @@ public class PathManager : MonoBehaviour
         }
         else
         {
-            if (!addStepVariation)
-                path = traj_toolbox.SimplifyPath(path);
+            // if (!addStepVariation)
+            //     path = traj_toolbox.SimplifyPath(path);
             path_queue = new Queue<Vector3>(path);
         }
         VisualizePath(path);
@@ -114,10 +106,20 @@ public class PathManager : MonoBehaviour
     {
         //if there's no qeue or nav_agent has other path - don't do anything
         if (path_queue.Count == 0)
+        {
+            int selected_target = body.PickRandom();
+            current_target = body.targets[selected_target].transform;
+            check_path = true;
             return;
+        }
         //if the destination is practically reached - set next point
-        if (nav_agent.hasPath == false || nav_agent.remainingDistance < 0.1f /*traj_toolbox.StepLength / 2*/)
-            nav_agent.SetDestination(path_queue.Dequeue());
+        // if (nav_agent.hasPath == true || nav_agent.remainingDistance < 0.1f /*traj_toolbox.StepLength / 2*/)
+        // {
+        //     Debug.Log("path_queue.Count " + path_queue.Count);
+        //     nav_agent.SetDestination(path_queue.Dequeue());
+        // }
+        nav_agent.SetDestination(path_queue.Dequeue());
+        Debug.Log("path_queue.Count " + path_queue.Count + " nav_agent.hasPath " + nav_agent.hasPath);
 
     }
 

@@ -41,6 +41,7 @@ public class BodyController : MonoBehaviour
     public TrajectoryToolbox traj_toolbox;
     public Evaluation evaluation;
     public GameObject[] targets;
+    public PathManager path_manager;
 
     public List<float> probability;
     public int n_targets;
@@ -57,8 +58,14 @@ public class BodyController : MonoBehaviour
 
         rec = new Recordings(manager.data_collection);
         
-        cal = new Calculations(manager.BodyTorso, random_initial_position_flag); //manager.data_collection
+        cal = new Calculations(manager.BodyTorso, manager.dataset, random_initial_position_flag); //manager.data_collection
+        
+        DateTime before = DateTime.Now;
         cal.Train();
+        DateTime after = DateTime.Now;
+        TimeSpan duration = after.Subtract(before);
+        Debug.Log("Training duration in milliseconds: " + duration.Milliseconds);
+
         n_targets = cal.n_targets; 
 
         targets = new GameObject[n_targets];
@@ -90,15 +97,13 @@ public class BodyController : MonoBehaviour
         else 
         {
             var curr_pos = transform.position;
-            movement = OnMove();
-            Vector3 tempVect = speed * movement * Time.deltaTime; 
-            rb.MovePosition(curr_pos + tempVect);
-
+            OnMove();
+       
             Vector3 velocity = VelocityCal();
 
             float yaw = head.head_orientation;
 
-            BodyRotate();
+            // BodyRotate();
             float body_rotation = transform.rotation.eulerAngles.y;
 
             // probability = new List<float>();
@@ -141,7 +146,7 @@ public class BodyController : MonoBehaviour
         rec.CSVParser(ref rec_positions, ref rec_rotations, ref rec_brotations, ref rec_targets);
     }
 
-    int PickRandom()
+    public int PickRandom()
     {
         int selected = Random.Range(0, n_targets); 
         return selected;
@@ -163,7 +168,9 @@ public class BodyController : MonoBehaviour
 
         int selected_target = PickRandom();
         if(agent_mode)
-            agent.destination = targets[selected_target].transform.position; 
+        {
+            path_manager.CheckPath = true;
+        }
 
         positions = new List <Vector3>();  
         velocities = new List <Vector3>();  
@@ -213,14 +220,16 @@ public class BodyController : MonoBehaviour
                     targetRotation,
                     360 * Time.fixedDeltaTime);
         rb.MoveRotation(targetRotation);
+
     }
 
-    Vector3 OnMove()
+    void OnMove()
     {
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
-        Vector3 movement = new Vector3 (x, 0, z);
-        return Vector3.ClampMagnitude(movement, 1);
+       
+        transform.RotateAround(transform.position, Vector3.up, x); 
+        transform.position += transform.forward * z * Time.deltaTime; 
     }
 
     void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, float body_rotation, List <float> probability)

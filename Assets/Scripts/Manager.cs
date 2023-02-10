@@ -8,9 +8,13 @@ public class Manager : MonoBehaviour
 {
     public bool AgentMode; 
     public bool BodyTorso;
-    public float HeadRotationRate;
     public bool Replay;
-    
+    public bool ArchTrajectory;
+    public bool HandControlledDataset;
+    public bool SimpleAgentDataset;
+    public bool ComplexAgentDataset;
+    public float HeadRotationRate;
+
     public BodyController body_controller;
     // public Recordings recordings;
     public PathManager path_manager;
@@ -19,6 +23,7 @@ public class Manager : MonoBehaviour
 
 
     public string data_collection;
+    public string dataset;
 
     void Start()
     {   
@@ -38,12 +43,11 @@ public class Manager : MonoBehaviour
             var targets = body_controller.targets;
             for(int i = 0; i < targets.Length; i++)
             {   
-                if (probability[i] == 0)
-                    targets[i].GetComponent<Renderer>().material.color = new Color(0.5f, 0.5f, 0.5f);
-                else 
-                    targets[i].GetComponent<Renderer>().material.color = new Color(1.0f - Math.Abs(probability[i]), 
-                                                                                   1.0f - Math.Abs(probability[i]) * 2,
-                                                                                   1.0f - Math.Abs(probability[i]) * 2); 
+                targets[i].GetComponent<Renderer>().material.color = new Color(0.0f + Math.Abs(probability[i]) * 5, 
+                                                                               1.0f - Math.Abs(probability[i]) * 3,
+                                                                         //    1.0f - Math.Abs(probability[i]) * 2
+                                                                               0
+                                                                              ); 
             } 
         }
     }
@@ -54,10 +58,15 @@ public class Manager : MonoBehaviour
         
 
         
-        if (AgentMode) 
+        if (AgentMode && !ArchTrajectory) 
         {
             body_controller.agent_mode = true;
             data_collection = DataCollection.SimpleAgent;
+        }
+        else if (AgentMode && ArchTrajectory) 
+        {
+            body_controller.agent_mode = true;
+            data_collection = DataCollection.ComplexAgent;
         }
         else           
         {
@@ -65,13 +74,20 @@ public class Manager : MonoBehaviour
             data_collection = DataCollection.Hand;
         }
 
+        if (HandControlledDataset)
+            dataset = DataCollection.Hand;
+        else if (SimpleAgentDataset)
+            dataset = DataCollection.SimpleAgent;
+        else if (ComplexAgentDataset)
+            dataset = DataCollection.ComplexAgent;
+
         Debug.Log("Library method: " + data_collection);
     }
 }
 
 static class DataCollection
 {
-  public const string Hand = "hand";
+  public const string Hand = "hand controlled";
   public const string SimpleAgent = "simple agent";
   public const string ComplexAgent = "complex agent";
 }

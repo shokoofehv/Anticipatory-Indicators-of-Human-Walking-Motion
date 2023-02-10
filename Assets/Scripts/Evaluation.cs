@@ -14,7 +14,7 @@ public class Evaluation : MonoBehaviour
         if(File.Exists(path))
             File.Delete(path);
 
-        string[] header = { "correct",
+        string[] headers = { "correct",
                              "total",
                              "accuracy",
                              "target",
@@ -26,7 +26,7 @@ public class Evaluation : MonoBehaviour
                              "avg body rotation",
                              "std body rotation"
                             };
-        
+        string header = String.Join(",", headers);
         File.WriteAllText(path, header + Environment.NewLine); 
 
     }

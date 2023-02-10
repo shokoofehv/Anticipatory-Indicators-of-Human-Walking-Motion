@@ -23,20 +23,25 @@ public class HeadRotation : MonoBehaviour
             transform.rotation = body.transform.rotation;
             head_routine = RandomRotate();
         }
+        reset = body.reset;
     }
 
     void Update()
     {
 
-        if (!manager.Replay)
+        if (!manager.Replay && manager.AgentMode)
         {
             // MouseControl();
-
-            Reset();
-
-            // RandomHeadRotation();
+            if (reset)
+                Reset();
                 
         }
+
+        else 
+        {
+            MouseControl();
+        }
+
         if (transform.eulerAngles.y > 180)
             head_orientation = transform.eulerAngles.y - 360;
         
@@ -47,23 +52,17 @@ public class HeadRotation : MonoBehaviour
 
     void Reset()
     {   
-        reset = body.reset;
-
-        if (reset)
-        {
-            // Debug.Log("Starting over head routine.");
-
-            StopCoroutine(head_routine);
-            reset = !reset;
-            StartCoroutine(head_routine);
-        } 
+        StopCoroutine(head_routine);
+        reset = !reset;
+        StartCoroutine(head_routine);
+        
     }
 
     IEnumerator RandomRotate()
     {
         bool wrong_rotation = false;
 
-        yield return new WaitForSeconds(0.7f);
+        // yield return new WaitForSeconds(0.7f);
         while (!reset)
         {   
             // yield return new WaitForSeconds(0.7f);

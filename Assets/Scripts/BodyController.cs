@@ -13,7 +13,7 @@ using UnityEngine.AI;
 public class BodyController : MonoBehaviour
 {
     public bool agent_mode = true;
-    private bool random_initial_position_flag = true;
+    // private bool random_initial_position_flag = true;
 
     public float speed = 1e6f; 
     public Vector3 initial_position;
@@ -58,7 +58,7 @@ public class BodyController : MonoBehaviour
 
         rec = new Recordings(manager.data_collection);
         
-        cal = new Calculations(manager.BodyTorso, manager.dataset, random_initial_position_flag); //manager.data_collection
+        cal = new Calculations(manager.BodyTorso, manager.dataset, manager.ScalingProbability); //manager.data_collection
         
         DateTime before = DateTime.Now;
         cal.Train();
@@ -228,8 +228,8 @@ public class BodyController : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
        
-        transform.RotateAround(transform.position, Vector3.up, x); 
-        transform.position += transform.forward * z * Time.deltaTime; 
+        transform.RotateAround(transform.position, Vector3.up, x * 5); 
+        transform.position += transform.forward * z * Time.deltaTime * speed; 
     }
 
     void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, float body_rotation, List <float> probability)

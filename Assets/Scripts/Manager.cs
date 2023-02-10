@@ -13,6 +13,8 @@ public class Manager : MonoBehaviour
     public bool HandControlledDataset;
     public bool SimpleAgentDataset;
     public bool ComplexAgentDataset;
+    public bool ScalingProbability;
+
     public float HeadRotationRate;
 
     public BodyController body_controller;
@@ -45,7 +47,6 @@ public class Manager : MonoBehaviour
             {   
                 targets[i].GetComponent<Renderer>().material.color = new Color(0.0f + Math.Abs(probability[i]) * 5, 
                                                                                1.0f - Math.Abs(probability[i]) * 3,
-                                                                         //    1.0f - Math.Abs(probability[i]) * 2
                                                                                0
                                                                               ); 
             } 
@@ -73,6 +74,7 @@ public class Manager : MonoBehaviour
             body_controller.agent_mode = false;
             data_collection = DataCollection.Hand;
         }
+        Debug.Log("Library method: " + data_collection);
 
         if (HandControlledDataset)
             dataset = DataCollection.Hand;
@@ -80,8 +82,13 @@ public class Manager : MonoBehaviour
             dataset = DataCollection.SimpleAgent;
         else if (ComplexAgentDataset)
             dataset = DataCollection.ComplexAgent;
-
-        Debug.Log("Library method: " + data_collection);
+        else 
+        {
+            Debug.Log("Please select a dataset!");
+            dataset = DataCollection.SimpleAgent;
+        }
+        
+        
     }
 }
 

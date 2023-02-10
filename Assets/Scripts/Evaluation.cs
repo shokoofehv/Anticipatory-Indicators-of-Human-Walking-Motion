@@ -66,7 +66,7 @@ public class Evaluation : MonoBehaviour
             else
                 furthest_time = -1;
         }
-        float accu = correct / (float)positions.Count;
+        string accu = (correct / (float)positions.Count).ToString("F2");
         float timestep_ahead = (furthest_time != -1) ? 
                                (positions.Count - furthest_time) / (float) positions.Count : 
                                 0f;

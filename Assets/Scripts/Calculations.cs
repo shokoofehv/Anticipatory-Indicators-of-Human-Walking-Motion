@@ -60,8 +60,9 @@ public class Calculations
     int n_features = 5; 
     int test_size = 110;
     bool body_torso;
+    bool scaling;
 
-    public Calculations(bool BodyTorso, string dataset, bool flag)
+    public Calculations(bool BodyTorso, string dataset, bool ScalingProbability)
     {   
         if (BodyTorso)
         {
@@ -69,7 +70,8 @@ public class Calculations
             n_features = 6;
         }
         
-        // if (flag)
+        scaling = ScalingProbability;
+
         dataset_path = $"Assets/Datasets/train - {dataset}.csv";
         Debug.Log($"Training from {dataset_path} ...");
     }
@@ -1080,8 +1082,9 @@ public class Calculations
 
                 var delta_var_delta = CalculateDeltaVar(i, j, k, positions, velocities, rotations, brotations);
                 var g = G_term(i, k);
-                
-                temp += (double) ((g + delta_var_delta) / positions.Count);
+                var pro = (double) ((g + delta_var_delta) / positions.Count);
+                if (scaling) pro /= Math.Pow(2, positions.Count - j);
+                temp += pro;
             }
             target_pro.Add((float) temp);
             

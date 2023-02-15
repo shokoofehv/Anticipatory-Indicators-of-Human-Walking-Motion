@@ -19,7 +19,7 @@ public class Recordings
 
     int path_id = 0;
 
-    public Recordings(string data_collection)
+    public Recordings(string data_collection, bool replay)
     {   
 
         if(File.Exists(file_path))
@@ -46,9 +46,17 @@ public class Recordings
         string header = String.Join(",", headers);
         File.WriteAllText(file_path, header + Environment.NewLine); 
 
+        if (data_collection == "new file")
+        {
+            // DateTime theTime = DateTime.Now;
+            // string date = theTime.ToString("yyyyMMdd\\Z");
+            // string time = theTime.ToString("HH:mm:ss\\Z");
+            // string datetime = theTime.ToString("yyyyMMdd\\ THHmmss\\");
+            data_collection += $" - {DateTime.Now:yyyyMMdd HHmmssfff}";
+        }
         dataset_path += $"train - {data_collection}.csv";
-
-        // Debug.Log($"Recording to {dataset_path} ...");
+        if (!replay)
+            Debug.Log($"Recording to {dataset_path} ...");
     }
 
      

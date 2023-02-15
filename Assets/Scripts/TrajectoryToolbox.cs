@@ -162,7 +162,7 @@ public class TrajectoryToolbox : MonoBehaviour
         new_path.AddRange(path_plus);
         new_path.AddRange(path_minus);
 
-        // new_path = SimplifyPath(new_path);
+        new_path = SimplifyPath(new_path);
 
         Debug.Log("Circle point count = " + new_path.Count);
 

@@ -1083,7 +1083,8 @@ public class Calculations
                 var delta_var_delta = CalculateDeltaVar(i, j, k, positions, velocities, rotations, brotations);
                 var g = G_term(i, k);
                 var pro = (double) ((g + delta_var_delta) / positions.Count);
-                if (scaling) pro /= Math.Pow(2, positions.Count - j);
+                // if (scaling) pro /= Math.Pow(2, positions.Count - j);
+                if (scaling) pro /= (positions.Count - j + 1);
                 temp += pro;
             }
             target_pro.Add((float) temp);
@@ -1151,18 +1152,18 @@ public class Calculations
                                List<float> rotations,
                                List<float> brotations)
     {   
-        int max_id = 0;
-        float max_value = float.NegativeInfinity;
+        // int max_id = 0;
+        // float max_value = float.NegativeInfinity;
         var probabilities = CalculateProb(positions, velocities, rotations, brotations);
-        for (int i = 0; i < probabilities.Count; i++)
-            if (probabilities[i] < 0 && 
-                probabilities[i] > max_value)
-                {
-                    max_value = probabilities[i];
-                    max_id = i;
-                }
+        
+        // for (int i = 0; i < probabilities.Count; i++)
+        //     if (probabilities[i] > max_value)
+        //     {
+        //         max_value = probabilities[i];
+        //         max_id = i;
+        //     }
 
-        // int max_id = probabilities.IndexOf(probabilities.Max());
+        int max_id = probabilities.IndexOf(probabilities.Max());
         var sum_list = Math.Abs(probabilities.Sum());
         var p_normalized = probabilities.Select(x => x/sum_list).ToArray();
         probabilities = new List <float> (p_normalized);

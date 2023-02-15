@@ -47,6 +47,7 @@ public class BodyController : MonoBehaviour
     public int n_targets;
     public float head_rotation_rate; 
     public bool reset;
+    public bool collided;
 
     void Start()
     {
@@ -56,7 +57,7 @@ public class BodyController : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         // rb.freezeRotation = true;
 
-        rec = new Recordings(manager.data_collection);
+        rec = new Recordings(manager.data_collection, manager.Replay);
         
         cal = new Calculations(manager.BodyTorso, manager.dataset, manager.ScalingProbability); //manager.data_collection
         
@@ -162,14 +163,16 @@ public class BodyController : MonoBehaviour
 
         if (!manager.Replay)
         {
-            transform.position = initial_position;
+            if (!agent_mode)
+                transform.position = initial_position;
+            else transform.position = Random.insideUnitCircle * 4;
             transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
         }    
 
         int selected_target = PickRandom();
         if(agent_mode)
         {
-            path_manager.CheckPath = true;
+            // path_manager.CheckPath = true;
         }
 
         positions = new List <Vector3>();  
@@ -179,31 +182,35 @@ public class BodyController : MonoBehaviour
         probabilities = new List <List <float>>(); 
         Debug.Log("New path started.");
         
-        reset = true;
+        // reset = false;
         StartCoroutine(SetFalse());
     }
 
     IEnumerator SetFalse()
     {
-        yield return new WaitForSeconds(0.005f); 
+        yield return new WaitForSeconds(0.001f); 
         reset = false;
     }
 
     void OnCollisionEnter(Collision collision)
     {   
-        string str = "Collision detected. ";
-        for (int i = 0; i < n_targets; i++)
-            if (collision.gameObject.name == ("Target " + i))
-            {
-                last_target_id = i;
+        if (collision.gameObject.name != "Ground")
+        {
+            string str = "Collision detected. ";
+            for (int i = 0; i < n_targets; i++)
+                if (collision.gameObject.name == ("Target " + i))
+                {
+                    last_target_id = i;
 
-                str += "You hit Target " + i;
-                Debug.Log(str);
-                break;
-            }
-        
+                    str += "You hit Target " + i;
+                    Debug.Log(str);
+                    break;
+                }
 
-        Reset();
+            collided = true;
+            reset = true;
+            Reset();
+        }
     }
 
     void BodyRotate()

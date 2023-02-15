@@ -13,7 +13,7 @@ public class PathManager : MonoBehaviour
     public BodyController body; 
     private Transform current_target;
 
-    public bool addStepVariation = false;
+    public bool addStepVariation;
 
     private NavMeshAgent nav_agent;
 
@@ -39,7 +39,8 @@ public class PathManager : MonoBehaviour
 
         int selected_target = body.PickRandom();
         current_target = body.targets[selected_target].transform;
-        
+        if (manager.AgentMode && !manager.ArchTrajectory)
+            nav_agent.destination = current_target.position;
     }
 
     void Update()
@@ -52,16 +53,13 @@ public class PathManager : MonoBehaviour
                 if (check_path && nav_agent.hasPath)
                 {   
                     // Vector3[] path = nav_agent.path.corners;
-    
-    
                     nav_agent.path.ClearCorners();
                     // path = traj_toolbox.GetConnectingArch(body.position, current_target.position, 60f);
                     traj_toolbox.GenerateTrajectory(Trajectory_type.Arch, body.transform.position, current_target.position, false);
                     check_path = false;
     
                     SetDestinationQeue(traj_toolbox.Path);
-                    VisualizePath(traj_toolbox.Path);
-                    Debug.Log("current_target.position " + current_target.position + " traj Path " + traj_toolbox.Path.Count + " check_path " + check_path);
+                    // VisualizePath(traj_toolbox.Path);
                 }
                 else if (!nav_agent.hasPath)
                 {
@@ -73,13 +71,16 @@ public class PathManager : MonoBehaviour
             }
             else 
             {
-                if (body.reset)
+                if (body.collided)
                 {
                     int selected_target = body.PickRandom();
                     current_target = body.targets[selected_target].transform;
                     nav_agent.destination = current_target.position; 
+                    body.collided = false;
+                    
                 }
                 VisualizePath(nav_agent.path.corners);
+                
             }
         }
     }
@@ -94,8 +95,8 @@ public class PathManager : MonoBehaviour
         }
         else
         {
-            // if (!addStepVariation)
-            //     path = traj_toolbox.SimplifyPath(path);
+            if (!addStepVariation)
+                path = traj_toolbox.SimplifyPath(path);
             path_queue = new Queue<Vector3>(path);
         }
         VisualizePath(path);
@@ -104,22 +105,19 @@ public class PathManager : MonoBehaviour
 
     private void UpdateQueuedPathing()
     {
-        //if there's no qeue or nav_agent has other path - don't do anything
-        if (path_queue.Count == 0)
+        if (body.collided)
         {
             int selected_target = body.PickRandom();
             current_target = body.targets[selected_target].transform;
             check_path = true;
+            body.collided = false;
             return;
         }
-        //if the destination is practically reached - set next point
-        // if (nav_agent.hasPath == true || nav_agent.remainingDistance < 0.1f /*traj_toolbox.StepLength / 2*/)
-        // {
-        //     Debug.Log("path_queue.Count " + path_queue.Count);
-        //     nav_agent.SetDestination(path_queue.Dequeue());
-        // }
+
+        if (path_queue.Count == 0)
+            return;
+        
         nav_agent.SetDestination(path_queue.Dequeue());
-        Debug.Log("path_queue.Count " + path_queue.Count + " nav_agent.hasPath " + nav_agent.hasPath);
 
     }
 

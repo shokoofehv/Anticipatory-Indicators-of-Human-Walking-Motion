@@ -9,7 +9,8 @@ public enum trainingDataset
 {
     handControlled,
     simpleAgent,
-    complexAgent
+    complexAgent,
+    mixAgent
 }
 
 public enum recordingTo
@@ -26,14 +27,14 @@ public class Manager : MonoBehaviour
     public bool BodyTorso;
     public bool Replay;
     public bool ArchTrajectory;
-    // public bool HandControlledDataset;
-    // public bool SimpleAgentDataset;
-    // public bool ComplexAgentDataset;
-    public bool ScalingProbability;
     public bool AddStepVariation;
+
+    public bool ScalingProbability;
+    public bool RandomHeadRotation;
+    public bool MouseControl;
     public bool ShowProbability;
 
-    public trainingDataset training_dataset;
+    public trainingDataset trainingDataset;
     public recordingTo recording;
 
     public float HeadRotationRate;
@@ -72,7 +73,7 @@ public class Manager : MonoBehaviour
             GUILayout.Box("Probabilities: ", boxStyle); //, GUILayout.Height(10)
             for (int i = 0; i < probability.Count; i++)
             {
-                GUILayout.Box($"Target {i}: " + probability[i].ToString("F4"), boxStyle);
+                GUILayout.Box($"Target {i}: " + probability[i].ToString(), boxStyle);
             }
         }
     }
@@ -80,39 +81,31 @@ public class Manager : MonoBehaviour
     void TargetVisualization()
     {
         var probability = body_controller.probability;
+
         if (probability.Count != 0)
         {
             var targets = body_controller.targets;
+            
+            // sorting the probabilities while getting the index in the original list 
+            var sorted = probability
+                .Select((x, i) => new KeyValuePair<float, int>(x, i))
+                .OrderBy(x => x.Key)
+                .ToList();
+            List <int> idx = sorted.Select(x => x.Value).ToList();
+
             for(int i = 0; i < targets.Length; i++)
             {   
-                targets[i].GetComponent<Renderer>().material.color = new Color(0.0f + Math.Abs(probability[i]) * 8, 
-                                                                               1.0f - Math.Abs(probability[i]) * 9,
-                                                                               0
-                                                                            // Math.Abs(probability[i])
-                                                                              ); 
+                // find where the current target is in the sorted probability list
+                int id = idx.IndexOf(i);
+                
+                // define the color of the targets based on their positions in the sorted list
+                // red to green from the lowest to the highest
+                float r = (targets.Length - id - 1) / ((float) targets.Length);
+                float g = (id + 1) / ((float) targets.Length);
+
+                targets[i].GetComponent<Renderer>().material.color = new Color(r, g, 0.0f);
             } 
         }
-
-        List<float> log_p = new List<float>();  
-        for (int i = 0; i < probability.Count; i++)
-        {
-            log_p.Add((float) Math.Abs(Math.Log10(Math.Abs(probability[i]))));
-        }
-        var sum_list = log_p.Sum();
-        var p_normalized = log_p.Select(x => x/sum_list).ToArray();
-
-        // if (probability.Count != 0)
-        // {
-        //     var targets = body_controller.targets;
-        //     for(int i = 0; i < targets.Length; i++)
-        //     {   
-        //         Debug.Log($"p_normalized[{i}] " + p_normalized[i]);
-        //         targets[i].GetComponent<Renderer>().material.color = new Color(0.8f - p_normalized[i], 
-        //                                                                        0.2f + p_normalized[i],
-        //                                                                        0
-        //                                                                       ); 
-        //     } 
-        // }
     }
 
     void Setup()
@@ -143,12 +136,14 @@ public class Manager : MonoBehaviour
         Debug.Log("Library method: " + data_collection);
 
         // training dataset management
-        if (training_dataset == trainingDataset.handControlled)
+        if (trainingDataset == trainingDataset.handControlled)
             dataset = DataCollection.Hand;
-        else if (training_dataset == trainingDataset.simpleAgent)
+        else if (trainingDataset == trainingDataset.simpleAgent)
             dataset = DataCollection.SimpleAgent;
-        else if (training_dataset == trainingDataset.complexAgent)
+        else if (trainingDataset == trainingDataset.complexAgent)
             dataset = DataCollection.ComplexAgent;
+        else if (trainingDataset == trainingDataset.mixAgent)
+            dataset = DataCollection.MixAgent;
         else 
         {
             Debug.Log("Please select a dataset!");
@@ -164,6 +159,7 @@ static class DataCollection
   public const string Hand = "hand controlled";
   public const string SimpleAgent = "simple agent";
   public const string ComplexAgent = "complex agent";
+  public const string MixAgent = "mix agent";
   public const string NewFile = "new file";
 }
 

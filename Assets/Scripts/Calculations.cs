@@ -58,7 +58,7 @@ public class Calculations
     int resample_freq = 100;
     public int n_targets = 8;
     int n_features = 5; 
-    int test_size = 110;
+    int test_size = 140;
     bool body_torso;
     bool scaling;
 
@@ -124,7 +124,53 @@ public class Calculations
             rec_rotations.Add(rotation_tmp); // add the temp list at the end of the file
             rec_brotations.Add(brotation_tmp); // add the temp list at the end of the file
             targets.Add(target_tmp); // add the temp list at the end of the file
+
         }
+        // // temporary files to select same number of records for each target
+        // List <List <float[]>> trec_positions = new List <List <float[]>>();
+        // List <List <float>> trec_rotations = new List <List <float>>();
+        // List <List <float>> trec_brotations = new List <List <float>>(); 
+        // List <List <float>> ttargets = new List <List <float>>(); 
+
+        // List<int> unique_targets = new List<int>(); //finding unique targets (in this case: 0 to 7)
+        // for(int i = 0; i < targets.Count; i++) {
+        //     unique_targets.Add((int) (targets[i].Last())); } 
+        // unique_targets.Sort();
+
+        // var q = from x in unique_targets //finding the count of each distinct target
+        //         group x by x into g
+        //         let count = g.Count()
+        //         orderby count descending
+        //         select new { Value = g.Key, Count = count };
+        
+        // int min = Int32.MaxValue;
+        // foreach (var x in q) 
+        // {
+        //     if  (x.Count < min)
+        //         min = x.Count;
+        // }
+        // for (int i  = 0; i < unique_targets.Count; i++)
+        // {
+        //     int n_rec = 1;
+        //     for (int j = 0; j < targets.Count; j++)
+        //     {
+        //         if (n_rec == min)
+        //             continue;
+        //         if (targets[j].Last() == unique_targets[i])
+        //         {
+        //             trec_positions.Add(rec_positions[j]);
+        //             trec_rotations.Add(rec_rotations[j]);
+        //             trec_brotations.Add(rec_brotations[j]);
+        //             ttargets.Add(targets[j]);
+        //             n_rec++;
+        //         }
+        //     }
+        // }
+        // rec_positions = trec_positions;
+        // rec_rotations = trec_rotations;
+        // rec_brotations = trec_brotations; 
+        // targets = ttargets;
+
     }
 
     void CSVParserControl() 
@@ -290,8 +336,14 @@ public class Calculations
         int min_id = test_size;
         for (int i = 0; i < rec_positions.Count; i++)
             if (rec_positions[i].Count < test_size && 
-                rec_positions[i].Count > 10)
+                rec_positions[i].Count > 150)
                 test_size = rec_positions[i].Count;
+
+        var counts = rec_positions.Select(x => x.Count);
+        double average = counts.Average();
+
+        // Debug.Log("Each test size Length is " + test_size);
+        // Debug.Log("Average size Length is " + average);
 
         for (int i = 0; i < rec_positions.Count; i++)
         {
@@ -1004,7 +1056,7 @@ public class Calculations
                             List<float> brotations)
     {
         if (determinant[id][near] == 0)
-            return -999;
+            return -50;
             // return 0;
 
         int N = n_features;
@@ -1049,13 +1101,14 @@ public class Calculations
         int N_f = n_features;
         var det = Math.Abs(determinant[i][k]);
         if (det == 0)
-            return -999;
+            return -50;
             // return 0;
 
         int exponent = det == 0 ? 0 : (int) Math.Floor((Math.Log10(det)));
         var mantissa = det * Math.Pow(10, -exponent);
 
         var log_det = -0.5 * (Math.Log10(mantissa) + exponent);
+
         double g = Math.Log10(Math.Pow(2 * Math.PI, N_f/2)) 
                    + log_det;
 
@@ -1076,15 +1129,20 @@ public class Calculations
         {   
             double temp = 0.0f;
             
-            for(int j = 0; j < positions.Count; j++)
+            // for(int j = 0; j < positions.Count; j++)
+            for(int j = Math.Max(0, positions.Count - 50); j < positions.Count; j++)
             {
                 int k = FindNearest(positions[j], i);
 
                 var delta_var_delta = CalculateDeltaVar(i, j, k, positions, velocities, rotations, brotations);
                 var g = G_term(i, k);
                 var pro = (double) ((g + delta_var_delta) / positions.Count);
-                // if (scaling) pro /= Math.Pow(2, positions.Count - j);
-                if (scaling) pro /= (positions.Count - j + 1);
+                if (scaling) pro /= Math.Pow(2, (positions.Count - j)/5 + 1);
+                // if (scaling && j < 5) pro /= (positions.Count - j + 1);
+                // if (scaling && j >= (positions.Count - 3)) 
+                //     pro /= Math.Pow(2, positions.Count - j);
+                // else if (scaling) 
+                //     pro /= 10;
                 temp += pro;
             }
             target_pro.Add((float) temp);

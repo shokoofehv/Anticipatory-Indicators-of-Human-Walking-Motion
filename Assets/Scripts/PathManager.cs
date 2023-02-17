@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using Random=UnityEngine.Random;
 
 public class PathManager : MonoBehaviour
 {
@@ -29,18 +30,21 @@ public class PathManager : MonoBehaviour
     private LineRenderer line_renderer;
     private Queue<Vector3> path_queue = new Queue<Vector3>();
     private List <Vector3> path = new List <Vector3>();
+    private bool random_dest_change;
 
     void Start()
     {
-        nav_agent = body.agent;
-        if (nav_agent == null)
-            Debug.Log("Couldn't find the nav mesh agent.");
-        line_renderer = GameObject.Find("Trajectory Toolbox").GetComponent<LineRenderer>();
+        if (manager.AgentMode)
+        {
+            nav_agent = body.agent;
+            if (nav_agent == null)
+                Debug.Log("Couldn't find the nav mesh agent.");
+            line_renderer = GameObject.Find("Trajectory Toolbox").GetComponent<LineRenderer>();
 
-        int selected_target = body.PickRandom();
-        current_target = body.targets[selected_target].transform;
-        if (manager.AgentMode && !manager.ArchTrajectory)
+            int selected_target = body.PickRandom();
+            current_target = body.targets[selected_target].transform;
             nav_agent.destination = current_target.position;
+        }
     }
 
     void Update()
@@ -52,18 +56,12 @@ public class PathManager : MonoBehaviour
             {        
                 if (check_path && nav_agent.hasPath)
                 {   
-                    // Vector3[] path = nav_agent.path.corners;
                     nav_agent.path.ClearCorners();
-                    // path = traj_toolbox.GetConnectingArch(body.position, current_target.position, 60f);
                     traj_toolbox.GenerateTrajectory(Trajectory_type.Arch, body.transform.position, current_target.position, false);
                     check_path = false;
     
                     SetDestinationQeue(traj_toolbox.Path);
-                    // VisualizePath(traj_toolbox.Path);
-                }
-                else if (!nav_agent.hasPath)
-                {
-                    nav_agent.destination = current_target.position; 
+                    VisualizePath(traj_toolbox.Path);
                 }
     
                 UpdateQueuedPathing();
@@ -82,6 +80,18 @@ public class PathManager : MonoBehaviour
                 VisualizePath(nav_agent.path.corners);
                 
             }
+
+            // change the target during the trajectory  
+            // if (!body.collided && nav_agent.hasPath)
+            // {
+            //     int rand = Random.Range(0, 5); //once in a five times
+            //     if (rand == 0)
+            //          random_dest_change = true;
+            //     else random_dest_change = false;
+            // }
+            
+
+
         }
     }
 
@@ -90,6 +100,7 @@ public class PathManager : MonoBehaviour
         if (addStepVariation && !check_path)
         {
             Debug.Log("Adding step variation on QEUE SETTING");
+            path = traj_toolbox.SimplifyPath(path);
             path = traj_toolbox.AddPathVariation(path);
             path_queue = new Queue<Vector3>(path);
         }
@@ -101,6 +112,9 @@ public class PathManager : MonoBehaviour
         }
         VisualizePath(path);
         traj_toolbox.Path = new List<Vector3>(path);
+
+        nav_agent.SetDestination(path_queue.Dequeue());
+
     }
 
     private void UpdateQueuedPathing()
@@ -115,9 +129,16 @@ public class PathManager : MonoBehaviour
         }
 
         if (path_queue.Count == 0)
+        {
+            nav_agent.destination = current_target.position;
             return;
-        
-        nav_agent.SetDestination(path_queue.Dequeue());
+        }
+            
+        if (nav_agent.hasPath == false || nav_agent.remainingDistance < 0.05f /*traj_toolbox.StepLength / 2*/)
+        {
+            nav_agent.SetDestination(path_queue.Dequeue());
+        }
+
 
     }
 

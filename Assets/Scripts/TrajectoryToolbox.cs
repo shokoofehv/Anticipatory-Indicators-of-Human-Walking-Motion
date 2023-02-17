@@ -20,7 +20,7 @@ public class TrajectoryToolbox : MonoBehaviour
         get { return path; }
         set
         {
-            Debug.Log("New path is set");
+            // Debug.Log("New path is set");
             path = value; 
         } 
     }
@@ -86,7 +86,7 @@ public class TrajectoryToolbox : MonoBehaviour
         }
 
         trajectory = CorrectTrajectoryValidity(trajectory);
-        Debug.LogWarning($"TestGenerator: trajectory count = {trajectory.Count}");
+        // Debug.LogWarning($"TestGenerator: trajectory count = {trajectory.Count}");
         if (useStepVariation && trajectory.Count > 0)
             trajectory = AddPathVariation(trajectory);
 
@@ -131,7 +131,7 @@ public class TrajectoryToolbox : MonoBehaviour
         //Debug.Log($"Now angle = {ang}");
         new_path = ExtractArchFromCircle(new_path, start, ang);
 
-        Debug.Log($"Now points = {new_path.Count}");
+        // Debug.Log($"Now points = {new_path.Count}");
 
         return new_path;
     }
@@ -146,7 +146,7 @@ public class TrajectoryToolbox : MonoBehaviour
 
         circle_center = new Vector3(position.x + arch_center_direction_norm.x * radius, 0f, position.z + arch_center_direction_norm.z * radius);
         float factor = 1 / (radius / step_precision);
-        Debug.Log($"Circle center point = {circle_center} radius = {radius} factor = {factor}");
+        // Debug.Log($"Circle center point = {circle_center} radius = {radius} factor = {factor}");
 
         for (float x = circle_center.x - radius; x < circle_center.x + radius+ factor* step_precision; x += factor * step_precision)
         {
@@ -164,14 +164,14 @@ public class TrajectoryToolbox : MonoBehaviour
 
         new_path = SimplifyPath(new_path);
 
-        Debug.Log("Circle point count = " + new_path.Count);
+        // Debug.Log("Circle point count = " + new_path.Count);
 
         return new_path;
     }
 
     public List<Vector3> SimplifyPath(IEnumerable<Vector3> path, float steps_num_simplification = 1f)
     {
-        Debug.Log($"Simplifying path: steps_num_simplification = {steps_num_simplification}");
+        // Debug.Log($"Simplifying path: steps_num_simplification = {steps_num_simplification}");
 
         List<Vector3> new_path = new List<Vector3>(path);
         for (int i = 1; i < new_path.Count; i++)
@@ -323,7 +323,7 @@ public class TrajectoryToolbox : MonoBehaviour
         
         if (transform.position == new_path[0])
             Debug.Log("They match!");
-        Debug.Log("Before AddPathVariation Waypoints count  = " + new_path.Count);
+        // Debug.Log("Before AddPathVariation Waypoints count  = " + new_path.Count);
         int path_cnt = new_path.Count - 1;
 
         int i = 0, cnt = 1;
@@ -356,7 +356,7 @@ public class TrajectoryToolbox : MonoBehaviour
             i = k + 1;
 
         }
-        Debug.Log("After AddPathVariation NEW Waypoints count = " + new_path.Count);
+        // Debug.Log("After AddPathVariation NEW Waypoints count = " + new_path.Count);
 
         //VisualizePath(new_waypoints);
 

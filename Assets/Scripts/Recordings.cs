@@ -15,11 +15,11 @@ public class Recordings
 
     string file_path = @"Assets/Log/recordings.csv";
     string dataset_path = @"Assets/Datasets/" ;
-    string replay_path = @"Assets/Datasets/train - simple agent.csv" ;
+    string replay_path = @"Assets/Datasets/" ;
 
     int path_id = 0;
 
-    public Recordings(string data_collection, bool replay)
+    public Recordings(string data_collection, string dataset, bool replay)
     {   
 
         if(File.Exists(file_path))
@@ -55,6 +55,7 @@ public class Recordings
             data_collection += $" - {DateTime.Now:yyyyMMdd HHmmssfff}";
         }
         dataset_path += $"train - {data_collection}.csv";
+        replay_path += $"train - {dataset}.csv";
         if (!replay)
             Debug.Log($"Recording to {dataset_path} ...");
     }

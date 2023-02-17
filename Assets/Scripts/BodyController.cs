@@ -15,7 +15,7 @@ public class BodyController : MonoBehaviour
     public bool agent_mode = true;
     // private bool random_initial_position_flag = true;
 
-    public float speed = 1e6f; 
+    public float speed = 1e3f; 
     public Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
@@ -52,12 +52,13 @@ public class BodyController : MonoBehaviour
     void Start()
     {
         initial_position = transform.position;
+        transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
 
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         // rb.freezeRotation = true;
 
-        rec = new Recordings(manager.data_collection, manager.Replay);
+        rec = new Recordings(manager.data_collection, manager.dataset, manager.Replay);
         
         cal = new Calculations(manager.BodyTorso, manager.dataset, manager.ScalingProbability); //manager.data_collection
         
@@ -105,7 +106,7 @@ public class BodyController : MonoBehaviour
             float yaw = head.head_orientation;
 
             // BodyRotate();
-            float body_rotation = transform.rotation.eulerAngles.y;
+            float body_rotation = transform.eulerAngles.y;
 
             // probability = new List<float>();
             probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
@@ -213,22 +214,22 @@ public class BodyController : MonoBehaviour
         }
     }
 
-    void BodyRotate()
-    {   
-        Quaternion targetRotation;
-        if (movement == Vector3.zero) // handle the standing and not moving
-            targetRotation = last_rotation;
+    // void BodyRotate()
+    // {   
+    //     Quaternion targetRotation;
+    //     if (movement == Vector3.zero) // handle the standing and not moving
+    //         targetRotation = last_rotation;
 
-        else 
-            targetRotation = Quaternion.LookRotation(movement);
+    //     else 
+    //         targetRotation = Quaternion.LookRotation(movement);
 
-        targetRotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRotation,
-                    360 * Time.fixedDeltaTime);
-        rb.MoveRotation(targetRotation);
+    //     targetRotation = Quaternion.RotateTowards(
+    //                 transform.rotation,
+    //                 targetRotation,
+    //                 360 * Time.fixedDeltaTime);
+    //     rb.MoveRotation(targetRotation);
 
-    }
+    // }
 
     void OnMove()
     {

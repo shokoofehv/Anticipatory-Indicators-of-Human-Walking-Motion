@@ -18,7 +18,7 @@ public class HeadRotation : MonoBehaviour
     private bool reset;
     void Start()
     {
-        if (!manager.Replay)
+        if (manager.RandomHeadRotation)
         {
             transform.rotation = body.transform.rotation;
             head_routine = RandomRotate();
@@ -29,7 +29,7 @@ public class HeadRotation : MonoBehaviour
     void Update()
     {
 
-        if (!manager.Replay && manager.AgentMode)
+        if (manager.RandomHeadRotation)
         {
             // MouseControl();
             if (body.reset)
@@ -37,23 +37,24 @@ public class HeadRotation : MonoBehaviour
                 
         }
 
-        else 
+        else if (manager.MouseControl)
         {
             MouseControl();
         }
 
-        if (transform.eulerAngles.y > 180)
-            head_orientation = transform.eulerAngles.y - 360;
+        // if (transform.eulerAngles.y > 180)
+        //     head_orientation = transform.eulerAngles.y - 360;
         
-        else
-            head_orientation = transform.eulerAngles.y;
+        // else
+        //     head_orientation = transform.eulerAngles.y;
+        head_orientation = transform.eulerAngles.y;
         
     }
 
     void Reset()
     {   
         StopCoroutine(head_routine);
-        Debug.Log("Coroutine stopped");
+        // Debug.Log("Coroutine stopped");
         StartCoroutine(head_routine);
         
     }

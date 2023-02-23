@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using Random=UnityEngine.Random;
+using System.Linq;
 
 public class PathManager : MonoBehaviour
 {
@@ -28,6 +29,7 @@ public class PathManager : MonoBehaviour
         }
     }
     private LineRenderer line_renderer;
+    private LineRenderer line_renderer2;
     private Queue<Vector3> path_queue = new Queue<Vector3>();
     private List <Vector3> path = new List <Vector3>();
     private bool random_dest_change;
@@ -39,8 +41,9 @@ public class PathManager : MonoBehaviour
             nav_agent = body.agent;
             if (nav_agent == null)
                 Debug.Log("Couldn't find the nav mesh agent.");
-            line_renderer = GameObject.Find("Trajectory Toolbox").GetComponent<LineRenderer>();
-
+            // line_renderer = GameObject.Find("Trajectory Toolbox").GetComponent<LineRenderer>();
+            line_renderer = traj_toolbox.lineRenderer;
+            line_renderer2 = gameObject.GetComponent<LineRenderer>();
             int selected_target = body.PickRandom();
             current_target = body.targets[selected_target].transform;
             nav_agent.destination = current_target.position;
@@ -80,17 +83,7 @@ public class PathManager : MonoBehaviour
                 VisualizePath(nav_agent.path.corners);
                 
             }
-
-            // change the target during the trajectory  
-            // if (!body.collided && nav_agent.hasPath)
-            // {
-            //     int rand = Random.Range(0, 5); //once in a five times
-            //     if (rand == 0)
-            //          random_dest_change = true;
-            //     else random_dest_change = false;
-            // }
-            
-
+            VisualizeCalPath(body.positions);
 
         }
     }
@@ -111,6 +104,8 @@ public class PathManager : MonoBehaviour
             path_queue = new Queue<Vector3>(path);
         }
         VisualizePath(path);
+        VisualizeCalPath(new List<Vector3>(path));
+
         traj_toolbox.Path = new List<Vector3>(path);
 
         nav_agent.SetDestination(path_queue.Dequeue());
@@ -151,6 +146,14 @@ public class PathManager : MonoBehaviour
         // Debug.Log($"PathManager ({gameObject.name}): waypoints.Count = {path.Count}, line_renderer exists {line_renderer != null}");
         line_renderer.positionCount = path.Count;
         line_renderer.SetPositions(path.ToArray());
+    }
+
+    private void VisualizeCalPath(List <Vector3> path)
+    {
+        int id = Math.Max(0, path.Count - 50);
+        var v_path = path.GetRange(id, path.Count - id);
+        line_renderer2.positionCount = v_path.Count;
+        line_renderer2.SetPositions(v_path.ToArray());
     }
 
     public void SetDestination(Vector3 point)

@@ -22,7 +22,7 @@ public class BodyController : MonoBehaviour
     int last_target_id;
     private Quaternion last_rotation;
 
-    List <Vector3> positions = new List <Vector3>();  
+    public List <Vector3> positions = new List <Vector3>();  
     List <Vector3> velocities = new List <Vector3>();  
     List <float> rotations = new List <float>();  
     List <float> body_rotations = new List <float>();  

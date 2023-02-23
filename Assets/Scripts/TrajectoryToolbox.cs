@@ -46,7 +46,7 @@ public class TrajectoryToolbox : MonoBehaviour
     public GameObject user;
     private NavMeshAgent nav_agent;
 
-    private LineRenderer lineRenderer;
+    public LineRenderer lineRenderer;
 
     private void Start()
     {
@@ -92,7 +92,7 @@ public class TrajectoryToolbox : MonoBehaviour
 
         //return trajectory;
         Path = trajectory;
-        VisualizeTrajectory(Path);
+        // VisualizeTrajectory(Path);
     }
 
     /// <summary>

@@ -918,16 +918,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02fbff8a04f67ac4b9c48eada471857c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AgentMode: 1
+  AgentMode: 0
   BodyTorso: 1
-  Replay: 0
+  Replay: 1
   ArchTrajectory: 1
   AddStepVariation: 1
   ScalingProbability: 1
   RandomHeadRotation: 0
+  MouseControl: 0
   ShowProbability: 1
-  trainingDataset: 2
-  recording: 2
+  trainingDataset: 3
+  recording: 3
   HeadRotationRate: 1.2
   body_controller: {fileID: 1668015761}
   path_manager: {fileID: 2125345438}
@@ -2284,7 +2285,7 @@ Rigidbody:
   m_Mass: 60
   m_Drag: 0
   m_AngularDrag: 0.05
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0

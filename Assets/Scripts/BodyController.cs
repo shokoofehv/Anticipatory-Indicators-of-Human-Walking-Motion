@@ -15,7 +15,7 @@ public class BodyController : MonoBehaviour
     public bool agent_mode = true;
     // private bool random_initial_position_flag = true;
 
-    public float speed = 1e3f; 
+    public float speed = 1f; 
     public Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;

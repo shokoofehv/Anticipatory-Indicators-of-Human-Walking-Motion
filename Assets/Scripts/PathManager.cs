@@ -13,7 +13,7 @@ public class PathManager : MonoBehaviour
     public Manager manager;
     public TrajectoryToolbox traj_toolbox;
     public BodyController body; 
-    private Transform current_target;
+    public Transform current_target;
 
     public bool addStepVariation;
 
@@ -108,7 +108,7 @@ public class PathManager : MonoBehaviour
 
         traj_toolbox.Path = new List<Vector3>(path);
 
-        nav_agent.SetDestination(path_queue.Dequeue());
+        // nav_agent.SetDestination(path_queue.Dequeue());
 
     }
 
@@ -125,7 +125,7 @@ public class PathManager : MonoBehaviour
 
         if (path_queue.Count == 0)
         {
-            nav_agent.destination = current_target.position;
+            nav_agent.SetDestination(current_target.position);
             return;
         }
             

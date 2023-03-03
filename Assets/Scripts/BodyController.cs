@@ -8,6 +8,8 @@ using System.Linq;
 using System;
 using Random=UnityEngine.Random;
 using UnityEngine.AI;
+using System.Globalization;
+
 
 // public class  
 public class BodyController : MonoBehaviour
@@ -15,8 +17,8 @@ public class BodyController : MonoBehaviour
     public bool agent_mode = true;
     // private bool random_initial_position_flag = true;
 
-    public float speed = 1f; 
-    public Vector3 initial_position;
+    private float speed = 1f; 
+    private Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
     int last_target_id;
@@ -27,6 +29,7 @@ public class BodyController : MonoBehaviour
     List <float> rotations = new List <float>();  
     List <float> body_rotations = new List <float>();  
     List <List <float>> probabilities = new List <List <float>>();  
+    List <string> timestamps = new List <string>();  
 
     List <float[]> rec_positions = new List <float[]>(); 
     List <float> rec_rotations = new List <float>(); 
@@ -38,10 +41,9 @@ public class BodyController : MonoBehaviour
     public Calculations cal;
     public Recordings rec;
     public NavMeshAgent agent;
-    public TrajectoryToolbox traj_toolbox;
     public Evaluation evaluation;
-    public GameObject[] targets;
     public PathManager path_manager;
+    public GameObject[] targets;
 
     public List<float> probability;
     public int n_targets;
@@ -49,8 +51,13 @@ public class BodyController : MonoBehaviour
     public bool reset;
     public bool collided;
 
+    float _interval = 0.03f;
+    float _time;
+
     void Start()
     {
+        _time = 0f;
+
         initial_position = transform.position;
         transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
 
@@ -77,7 +84,8 @@ public class BodyController : MonoBehaviour
             Debug.Log($"Target {i} is found.");
         }
 
-        if (agent_mode)
+        // if (agent_mode)
+        if (manager.AgentMode)
         {
             agent = GetComponent<NavMeshAgent>();
             agent.enabled = true;
@@ -85,7 +93,12 @@ public class BodyController : MonoBehaviour
                 Debug.Log("In Agent Mode");
         }
 
-        if (manager.Replay) ReadFile();
+        if (manager.Replay) 
+        {
+            ReadFile();
+            _interval *= 2;
+        }
+        // else StartCoroutine(recording());
 
         head_rotation_rate = manager.HeadRotationRate;
     }
@@ -97,6 +110,37 @@ public class BodyController : MonoBehaviour
             Replay();
         }
         else 
+        {
+            _time += Time.deltaTime;
+            if (_time >= _interval) {
+                var curr_pos = transform.position;
+                OnMove();
+
+                Vector3 velocity = VelocityCal();
+
+                float yaw = head.head_orientation;
+
+                // BodyRotate();
+                float body_rotation = transform.eulerAngles.y;
+
+                // probability = new List<float>();
+                probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
+
+                UpdatePositionList(curr_pos, velocity, yaw, body_rotation, probability);
+
+                _time = 0f;
+            }
+            
+            
+            if (Input.GetKeyDown(KeyCode.R)) 
+                Reset();
+        }
+        
+    }
+    
+    IEnumerator recording()
+    {
+        while(true)
         {
             var curr_pos = transform.position;
             OnMove();
@@ -113,34 +157,38 @@ public class BodyController : MonoBehaviour
             
             UpdatePositionList(curr_pos, velocity, yaw, body_rotation, probability);
 
-            if (Input.GetKeyDown(KeyCode.R)) 
-                Reset();
+            yield return new WaitForSeconds(0.03f);
         }
-        
     }
-    
+
     void Replay()
     {
-        var pos = rec_positions.PopAt(0);
-        var curr_pos = new Vector3 (pos[0], pos[1], pos[2]);
-        transform.position = curr_pos;
+        _time += Time.deltaTime;
+        if (_time >= _interval) 
+        {
+            var pos = rec_positions.PopAt(0);
+            var curr_pos = new Vector3 (pos[0], pos[1], pos[2]);
+            transform.position = curr_pos;
 
-        var rot = rec_rotations.PopAt(0);
-        var curr_rot = Quaternion.Euler(0, rot, 0);
-        transform.rotation = curr_rot;
+            var rot = rec_rotations.PopAt(0);
+            var curr_rot = Quaternion.Euler(0, rot, 0);
+            transform.rotation = curr_rot;
 
-        var brot = rec_brotations.PopAt(0);
-        var curr_brot = Quaternion.Euler(0, brot, 0);
-        head.transform.rotation = curr_brot;
-        
-        var target = (int) rec_targets.PopAt(0);
+            var brot = rec_brotations.PopAt(0);
+            var curr_brot = Quaternion.Euler(0, brot, 0);
+            head.transform.rotation = curr_brot;
 
-        Vector3 velocity = VelocityCal();
+            var target = (int) rec_targets.PopAt(0);
 
-        probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
-        UpdatePositionList(curr_pos, velocity, rot, brot, probability);
+            Vector3 velocity = VelocityCal();
 
-        evaluation.Eval(curr_pos, rot, brot, probability, target);
+            probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
+            UpdatePositionList(curr_pos, velocity, rot, brot, probability);
+
+            evaluation.Eval(curr_pos, rot, brot, probability, target);
+
+            _time = 0;
+        }
     }
 
     void ReadFile()
@@ -156,9 +204,11 @@ public class BodyController : MonoBehaviour
 
     void Reset()
     {
+        _time = 0f; 
+
         if (positions.Count > 10)
         {
-            rec.SavetoCSV(positions, rotations, body_rotations, probabilities, last_target_id, manager.Replay);
+            rec.SavetoCSV(timestamps, positions, rotations, body_rotations, probabilities, last_target_id, manager.Replay);
             evaluation.GetResults(positions, rotations, body_rotations, probabilities, last_target_id);
         }
 
@@ -166,8 +216,19 @@ public class BodyController : MonoBehaviour
         {
             if (!agent_mode)
                 transform.position = initial_position;
-            else transform.position = Random.insideUnitCircle * 4;
-            transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+            else 
+            {    
+                Vector2 rand = Random.insideUnitCircle * 3;
+                transform.position = new Vector3(rand.x, 0, rand.y);
+            }
+            
+            // transform.rotation = Quaternion.Euler(0, 0, 0) - path_manager.current_target.rotation;
+            // transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+            Vector3 targetDir = path_manager.current_target.position - transform.position;
+            float angle = Vector3.Angle(targetDir, transform.forward);
+            transform.rotation = Quaternion.Euler(0, angle, 0);
+
+            Debug.Log($"initial position: {transform.position}   initial rotation {transform.rotation}");
         }    
 
         int selected_target = PickRandom();
@@ -181,10 +242,11 @@ public class BodyController : MonoBehaviour
         rotations = new List <float>();  
         body_rotations = new List <float>();  
         probabilities = new List <List <float>>(); 
+        timestamps = new List <string>();
         Debug.Log("New path started.");
         
         // reset = false;
-        StartCoroutine(SetFalse());
+        // StartCoroutine(SetFalse());
     }
 
     IEnumerator SetFalse()
@@ -213,23 +275,7 @@ public class BodyController : MonoBehaviour
             Reset();
         }
     }
-
-    // void BodyRotate()
-    // {   
-    //     Quaternion targetRotation;
-    //     if (movement == Vector3.zero) // handle the standing and not moving
-    //         targetRotation = last_rotation;
-
-    //     else 
-    //         targetRotation = Quaternion.LookRotation(movement);
-
-    //     targetRotation = Quaternion.RotateTowards(
-    //                 transform.rotation,
-    //                 targetRotation,
-    //                 360 * Time.fixedDeltaTime);
-    //     rb.MoveRotation(targetRotation);
-
-    // }
+ 
 
     void OnMove()
     {
@@ -242,11 +288,13 @@ public class BodyController : MonoBehaviour
 
     void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, float body_rotation, List <float> probability)
     {
+        var timestamp = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff"); 
         positions.Add(new_position);
         velocities.Add(new_velocity);
         rotations.Add(yaw);
         body_rotations.Add(body_rotation);
         probabilities.Add(probability);
+        timestamps.Add(timestamp);
     }
 
     Vector3 VelocityCal()

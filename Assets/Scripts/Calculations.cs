@@ -58,7 +58,7 @@ public class Calculations
     int resample_freq = 100;
     public int n_targets = 8;
     int n_features = 5; 
-    int test_size = 140;
+    int test_size = 80;  
     bool body_torso;
     bool scaling;
 
@@ -255,7 +255,7 @@ public class Calculations
         // }   
     }
 
-    public float[] Downsampling(float[] array, int Length)
+    public List <float> Downsampling(float[] array, int Length)
     {
         int insert = 0;
         float[] window = new float[Length];
@@ -322,7 +322,7 @@ public class Calculations
         window[insert] = array[array.Length - 1]; // Always add last
         window_x[insert] = array.Length;
 
-        return window;
+        return  new List<float>(window);
     }
 
     void Downsample()
@@ -335,43 +335,60 @@ public class Calculations
 
         int min_id = test_size;
         for (int i = 0; i < rec_positions.Count; i++)
-            if (rec_positions[i].Count < test_size && 
-                rec_positions[i].Count > 150)
-                test_size = rec_positions[i].Count;
-
+            if (rec_positions[i].Count < min_id && 
+                rec_positions[i].Count > test_size)
+                min_id = rec_positions[i].Count;
+        test_size = min_id; 
         var counts = rec_positions.Select(x => x.Count);
         double average = counts.Average();
+        test_size = (int) Math.Floor(average);
 
-        // Debug.Log("Each test size Length is " + test_size);
-        // Debug.Log("Average size Length is " + average);
+        Debug.Log("Each test size Length is " + test_size);
+        Debug.Log("Average size Length is " + average);
 
         for (int i = 0; i < rec_positions.Count; i++)
         {
-            if (rec_positions[i].Count < test_size)
-                    // add interpolate
-                    continue;
+            List <float> downsampling_x = new List <float>();
+            List <float> downsampling_z = new List <float>();
+            List <float> downsampling_rot = new List <float>();
+            List <float> downsampling_brot = new List <float>();
+            List <float> downsampling_target = new List <float>();
 
             List <float> x = new List<float>();
             List <float> z = new List<float>();
+
             for (int j = 0; j < rec_positions[i].Count; j++)
             {
                 x.Add(rec_positions[i][j][0]);
                 z.Add(rec_positions[i][j][2]);
             }
-            var downsampling_x = Downsampling(x.ToArray(), test_size); 
-            var downsampling_z = Downsampling(z.ToArray(), test_size); 
-            var downsampling_rot = Downsampling(rec_rotations[i].ToArray(), test_size); 
-            var downsampling_brot = Downsampling(rec_brotations[i].ToArray(), test_size); 
-            var downsampling_target = Downsampling(targets[i].ToArray(), test_size); 
+
+            if (rec_positions[i].Count < test_size) 
+            {
+                // resample_freq = test_size;
+                downsampling_x = Resampling(x, test_size); 
+                downsampling_z = Resampling(z, test_size); 
+                downsampling_rot = Resampling(rec_rotations[i], test_size); 
+                downsampling_brot = Resampling(rec_brotations[i], test_size); 
+                downsampling_target = Resampling(targets[i], test_size);
+            }
+            else 
+            {
+                downsampling_x = Downsampling(x.ToArray(), test_size); 
+                downsampling_z = Downsampling(z.ToArray(), test_size); 
+                downsampling_rot = Downsampling(rec_rotations[i].ToArray(), test_size); 
+                downsampling_brot = Downsampling(rec_brotations[i].ToArray(), test_size); 
+                downsampling_target = Downsampling(targets[i].ToArray(), test_size); 
+            }
 
             List <float[]> downsampled = new List <float[]>();
             for(int j = 0; j < test_size; j++)
                 downsampled.Add(new float[] {downsampling_x[j], downsampling_z[j]});
             
             positions_temp.Add(downsampled);
-            rotations_temp.Add(new List <float> (downsampling_rot));
-            brotations_temp.Add(new List <float> (downsampling_brot));
-            targets_temp.Add(new List <float> (downsampling_target));
+            rotations_temp.Add(downsampling_rot);
+            brotations_temp.Add(downsampling_brot);
+            targets_temp.Add(downsampling_target);
         }
         rec_positions = positions_temp;
         rec_rotations = rotations_temp;
@@ -410,11 +427,13 @@ public class Calculations
             destination[destFrom + i] = valueFrom + (valueLength * i)/destLength;
     }
 
-    List<float> Resampling(List <float> r)
+    List<float> Resampling(List <float> r, int _dest_size)
     {   
         float[] source = r.ToArray();
         // find the resample array size 
-        int dest_size = (int) Math.Round((double) source.Length * resample_freq / frame_rate);
+        // int dest_size = (int) Math.Round((double) source.Length * resample_freq / frame_rate);
+        int dest_size = _dest_size;
+
         float[] destination = new float[dest_size];
         destination[0] = source[0];
         int jPrevious = 0;
@@ -437,7 +456,7 @@ public class Calculations
 
         // add to resample_rotations after resampling each trial
         foreach (var r in rec_rotations){
-            List<float> resampled = Resampling(r);
+            List<float> resampled = Resampling(r, test_size);
             resample_rotations.Add(resampled);
         }
 
@@ -451,8 +470,8 @@ public class Calculations
                 z_axis.Add(p[1]);
             }
             // resample x and z of each trial
-            List<float> resampled1 = Resampling(x_axis);
-            List<float> resampled2 = Resampling(z_axis);
+            List<float> resampled1 = Resampling(x_axis, test_size);
+            List<float> resampled2 = Resampling(z_axis, test_size);
 
             // add to resample_positions after resampling each trial as a new array
             List<float[]> resampled = new List <float[]>();

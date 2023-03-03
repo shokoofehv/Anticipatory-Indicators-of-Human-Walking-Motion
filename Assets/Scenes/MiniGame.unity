@@ -661,7 +661,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &517441394
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -928,7 +928,7 @@ MonoBehaviour:
   MouseControl: 0
   ShowProbability: 1
   trainingDataset: 3
-  recording: 3
+  recording: 4
   HeadRotationRate: 1.2
   body_controller: {fileID: 1668015761}
   path_manager: {fileID: 2125345438}
@@ -2361,7 +2361,7 @@ Transform:
   m_GameObject: {fileID: 1668015755}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.7, y: 1, z: 0.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 557040995}
   - {fileID: 1777885875}
@@ -2383,16 +2383,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent_mode: 1
-  speed: 3.5
-  initial_position: {x: 0, y: 0, z: 0}
   positions: []
   manager: {fileID: 716672437}
   head: {fileID: 1777885879}
   agent: {fileID: 1668015763}
-  traj_toolbox: {fileID: 0}
   evaluation: {fileID: 133325847}
-  targets: []
   path_manager: {fileID: 2125345438}
+  targets: []
   probability: []
   n_targets: 0
   head_rotation_rate: 0
@@ -2574,7 +2571,7 @@ Transform:
   m_GameObject: {fileID: 1777885874}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.75, z: 0}
-  m_LocalScale: {x: 0.7, y: 0.5, z: 0.7}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_Children:
   - {fileID: 755364289}
   m_Father: {fileID: 1668015760}
@@ -2655,7 +2652,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   head_orientation: 0
-  body: {fileID: 1668015761}
+  body: {fileID: 0}
   manager: {fileID: 716672437}
 --- !u!1 &1812881205
 GameObject:
@@ -3208,6 +3205,7 @@ MonoBehaviour:
   manager: {fileID: 716672437}
   traj_toolbox: {fileID: 1535339083}
   body: {fileID: 1668015761}
+  current_target: {fileID: 0}
   addStepVariation: 0
 --- !u!4 &2125345439
 Transform:

@@ -18,6 +18,7 @@ public enum recordingTo
     handControlled,
     simpleAgent,
     complexAgent,
+    mixAgent,
     newFile
 }
 
@@ -122,6 +123,10 @@ public class Manager : MonoBehaviour
         else if (recording == recordingTo.complexAgent) 
         {
             data_collection = DataCollection.ComplexAgent;
+        }
+        else if (recording == recordingTo.mixAgent) 
+        {
+            data_collection = DataCollection.MixAgent;
         }
         else if (recording == recordingTo.handControlled) 
         {

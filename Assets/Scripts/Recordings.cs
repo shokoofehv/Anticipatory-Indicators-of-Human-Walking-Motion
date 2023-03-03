@@ -48,10 +48,6 @@ public class Recordings
 
         if (data_collection == "new file")
         {
-            // DateTime theTime = DateTime.Now;
-            // string date = theTime.ToString("yyyyMMdd\\Z");
-            // string time = theTime.ToString("HH:mm:ss\\Z");
-            // string datetime = theTime.ToString("yyyyMMdd\\ THHmmss\\");
             data_collection += $" - {DateTime.Now:yyyyMMdd HHmmssfff}";
         }
         dataset_path += $"train - {data_collection}.csv";
@@ -61,7 +57,8 @@ public class Recordings
     }
 
      
-    public void SavetoCSV (List <Vector3> positions 
+    public void SavetoCSV (List <string> timestamps
+                        , List <Vector3> positions 
                         , List <float> yaws 
                         , List <float> body_rotations
                         , List <List <float>> probs

@@ -56,6 +56,10 @@ public class Evaluation : MonoBehaviour
         {
             // Debug.Log("correct " + correct);
             var probabilities = probs[i];
+            if (probabilities.Count == 0)
+            {
+                continue; 
+            }
             int max_id = probabilities.IndexOf(probabilities.Max());
             if (max_id == target_id)
             {   

@@ -72,6 +72,10 @@ public class Recordings
 
         for (int i = 0; i < positions.Count; i++)
         {   
+            if (probs[i].Count == 0)
+            {
+                continue; 
+            }
             float[] output = {
                             path_id,
                             positions[i].x,
@@ -109,7 +113,8 @@ public class Recordings
     public void CSVParser (ref List<float[]> rec_positions, 
                            ref List<float> rec_rotations, 
                            ref List<float> rec_brotations,
-                           ref List<float> targets
+                           ref List<float> targets,
+                           ref List<string> ids
                            )
     {   
         using(var reader = new StreamReader(replay_path))
@@ -120,7 +125,8 @@ public class Recordings
                 var line = reader.ReadLine(); 
                 var values = line.Split(',');
                 var id = values[1]; 
-            
+                ids.Add(id);
+                
                 float[] new_values = new float[values.Length-2]; 
                 float out_val = 0.0f;
                 for (int i = 2; i < values.Length; i++) 
@@ -128,6 +134,7 @@ public class Recordings
                     if (float.TryParse(values[i], out out_val)) 
                         new_values[i-2] = float.Parse(values[i]);
                 }
+                
                 
                 rec_positions.Add(new float[] {new_values[0], new_values[1], new_values[2]}); 
                 rec_rotations.Add(new_values[3]); 
@@ -138,3 +145,12 @@ public class Recordings
     }
 
 }
+// static class ListExtension
+// {
+//     public static T PopAt<T>(this List<T> list, int index)
+//     {
+//         T r = list[index];
+//         list.RemoveAt(index);
+//         return r;
+//     }
+// }

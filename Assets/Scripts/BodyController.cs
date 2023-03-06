@@ -17,7 +17,7 @@ public class BodyController : MonoBehaviour
     public bool agent_mode = true;
     // private bool random_initial_position_flag = true;
 
-    private float speed = 1f; 
+    private float speed = 2f; 
     private Vector3 initial_position;
     private Rigidbody rb;
     Vector3 movement;
@@ -31,10 +31,11 @@ public class BodyController : MonoBehaviour
     List <List <float>> probabilities = new List <List <float>>();  
     List <string> timestamps = new List <string>();  
 
-    List <float[]> rec_positions = new List <float[]>(); 
+    public List <float[]> rec_positions = new List <float[]>(); 
     List <float> rec_rotations = new List <float>(); 
     List <float> rec_brotations = new List <float>(); 
     List <float> rec_targets = new List <float>(); 
+    public List <string> ids = new List <string> ();
 
     public Manager manager;
     public HeadRotation head;
@@ -46,21 +47,27 @@ public class BodyController : MonoBehaviour
     public GameObject[] targets;
 
     public List<float> probability;
+    private Vector3 curr_pos;
+    private Vector3 velocity;
+    private float yaw;
+    private float body_rotation;
+    
     public int n_targets;
     public float head_rotation_rate; 
     public bool reset;
     public bool collided;
 
-    float _interval = 0.03f;
-    float _time;
+    // float _interval = 0.03f;
+    // float _time;
 
     void Start()
     {
-        _time = 0f;
+        // _time = 0f;
 
         initial_position = transform.position;
-        transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
-
+        // transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+        head_rotation_rate = manager.HeadRotationRate;
+        
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         // rb.freezeRotation = true;
@@ -92,15 +99,19 @@ public class BodyController : MonoBehaviour
             if (agent != null)
                 Debug.Log("In Agent Mode");
         }
-
+        
         if (manager.Replay) 
         {
             ReadFile();
-            _interval *= 2;
+            // _interval *= 1;
         }
-        // else StartCoroutine(recording());
-
-        head_rotation_rate = manager.HeadRotationRate;
+        else 
+        {
+            GetCurrentData();
+            
+        }
+        StartCoroutine(UpdatePositionList());
+        
     }
 
     void Update()
@@ -111,26 +122,7 @@ public class BodyController : MonoBehaviour
         }
         else 
         {
-            _time += Time.deltaTime;
-            if (_time >= _interval) {
-                var curr_pos = transform.position;
-                OnMove();
-
-                Vector3 velocity = VelocityCal();
-
-                float yaw = head.head_orientation;
-
-                // BodyRotate();
-                float body_rotation = transform.eulerAngles.y;
-
-                // probability = new List<float>();
-                probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
-
-                UpdatePositionList(curr_pos, velocity, yaw, body_rotation, probability);
-
-                _time = 0f;
-            }
-            
+            GetCurrentData();
             
             if (Input.GetKeyDown(KeyCode.R)) 
                 Reset();
@@ -138,74 +130,60 @@ public class BodyController : MonoBehaviour
         
     }
     
-    IEnumerator recording()
+    void GetCurrentData()
+    {
+        curr_pos = transform.position;
+        OnMove();
+
+        velocity = VelocityCal();
+
+        yaw = head.head_orientation;
+        // BodyRotate();
+        body_rotation = transform.eulerAngles.y;
+        // probability = new List<float>();
+        probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
+    }
+ 
+
+    void Replay()
+    {
+        transform.position = curr_pos;
+        transform.rotation = Quaternion.Euler(0, yaw, 0);
+        head.transform.rotation = Quaternion.Euler(0, body_rotation, 0);
+        velocity = VelocityCal();
+        probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
+        
+    }
+
+    IEnumerator UpdatePositionList()
     {
         while(true)
         {
-            var curr_pos = transform.position;
-            OnMove();
-       
-            Vector3 velocity = VelocityCal();
+            // Debug.Log($" - {DateTime.Now:HH mm ss fff}");
+            if (manager.Replay)
+            {
+                var pos = rec_positions.PopAt(0);
+                curr_pos = new Vector3 (pos[0], pos[1], pos[2]);
+        
+                yaw = rec_rotations.PopAt(0);
 
-            float yaw = head.head_orientation;
+                body_rotation = rec_brotations.PopAt(0);
+            }
 
-            // BodyRotate();
-            float body_rotation = transform.eulerAngles.y;
-
-            // probability = new List<float>();
-            probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
-            
-            UpdatePositionList(curr_pos, velocity, yaw, body_rotation, probability);
-
+            var timestamp = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff"); 
+            positions.Add(curr_pos);
+            velocities.Add(velocity);
+            rotations.Add(yaw);
+            body_rotations.Add(body_rotation);
+            probabilities.Add(probability);
+            timestamps.Add(timestamp);
             yield return new WaitForSeconds(0.03f);
         }
     }
 
-    void Replay()
-    {
-        _time += Time.deltaTime;
-        if (_time >= _interval) 
-        {
-            var pos = rec_positions.PopAt(0);
-            var curr_pos = new Vector3 (pos[0], pos[1], pos[2]);
-            transform.position = curr_pos;
-
-            var rot = rec_rotations.PopAt(0);
-            var curr_rot = Quaternion.Euler(0, rot, 0);
-            transform.rotation = curr_rot;
-
-            var brot = rec_brotations.PopAt(0);
-            var curr_brot = Quaternion.Euler(0, brot, 0);
-            head.transform.rotation = curr_brot;
-
-            var target = (int) rec_targets.PopAt(0);
-
-            Vector3 velocity = VelocityCal();
-
-            probability = cal.CalculateOnRun(positions, velocities, rotations, body_rotations);
-            UpdatePositionList(curr_pos, velocity, rot, brot, probability);
-
-            evaluation.Eval(curr_pos, rot, brot, probability, target);
-
-            _time = 0;
-        }
-    }
-
-    void ReadFile()
-    {
-        rec.CSVParser(ref rec_positions, ref rec_rotations, ref rec_brotations, ref rec_targets);
-    }
-
-    public int PickRandom()
-    {
-        int selected = Random.Range(0, n_targets); 
-        return selected;
-    }
-
     void Reset()
     {
-        _time = 0f; 
-
+        // _time = 0f; 
         if (positions.Count > 10)
         {
             rec.SavetoCSV(timestamps, positions, rotations, body_rotations, probabilities, last_target_id, manager.Replay);
@@ -217,25 +195,17 @@ public class BodyController : MonoBehaviour
             if (!agent_mode)
                 transform.position = initial_position;
             else 
-            {    
-                Vector2 rand = Random.insideUnitCircle * 3;
-                transform.position = new Vector3(rand.x, 0, rand.y);
+            {   
+                // Vector2 rand = Random.insideUnitCircle * 3;
+                // transform.position = new Vector3(rand.x, 0, rand.y);
+                transform.position = initial_position;
+
+                Vector3 targetDir = path_manager.current_target.position - transform.position;
+                float angle = Vector3.Angle(targetDir, transform.forward);
+                angle += transform.eulerAngles.y;
+                transform.rotation = Quaternion.Euler(0, angle, 0); 
             }
-            
-            // transform.rotation = Quaternion.Euler(0, 0, 0) - path_manager.current_target.rotation;
-            // transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
-            Vector3 targetDir = path_manager.current_target.position - transform.position;
-            float angle = Vector3.Angle(targetDir, transform.forward);
-            transform.rotation = Quaternion.Euler(0, angle, 0);
-
-            Debug.Log($"initial position: {transform.position}   initial rotation {transform.rotation}");
         }    
-
-        int selected_target = PickRandom();
-        if(agent_mode)
-        {
-            // path_manager.CheckPath = true;
-        }
 
         positions = new List <Vector3>();  
         velocities = new List <Vector3>();  
@@ -247,12 +217,6 @@ public class BodyController : MonoBehaviour
         
         // reset = false;
         // StartCoroutine(SetFalse());
-    }
-
-    IEnumerator SetFalse()
-    {
-        yield return new WaitForSeconds(0.001f); 
-        reset = false;
     }
 
     void OnCollisionEnter(Collision collision)
@@ -270,9 +234,10 @@ public class BodyController : MonoBehaviour
                     break;
                 }
 
+            Reset();
+
             collided = true;
             reset = true;
-            Reset();
         }
     }
  
@@ -284,17 +249,6 @@ public class BodyController : MonoBehaviour
        
         transform.RotateAround(transform.position, Vector3.up, x * 5); 
         transform.position += transform.forward * z * Time.deltaTime * speed; 
-    }
-
-    void UpdatePositionList(Vector3 new_position, Vector3 new_velocity, float yaw, float body_rotation, List <float> probability)
-    {
-        var timestamp = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff"); 
-        positions.Add(new_position);
-        velocities.Add(new_velocity);
-        rotations.Add(yaw);
-        body_rotations.Add(body_rotation);
-        probabilities.Add(probability);
-        timestamps.Add(timestamp);
     }
 
     Vector3 VelocityCal()
@@ -310,6 +264,23 @@ public class BodyController : MonoBehaviour
         else {
             return new Vector3 (0, 0, 0);
         }
+    }
+
+    void ReadFile()
+    {
+        rec.CSVParser(ref rec_positions, ref rec_rotations, ref rec_brotations, ref rec_targets, ref ids);
+    }
+
+    public int PickRandom()
+    {
+        int selected = Random.Range(0, n_targets); 
+        return selected;
+    }
+
+    IEnumerator SetFalse()
+    {
+        yield return new WaitForSeconds(0.001f); 
+        reset = false;
     }
 
 }

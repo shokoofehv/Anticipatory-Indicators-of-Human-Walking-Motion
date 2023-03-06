@@ -32,8 +32,10 @@ public class PathManager : MonoBehaviour
     private LineRenderer line_renderer2;
     private Queue<Vector3> path_queue = new Queue<Vector3>();
     private List <Vector3> path = new List <Vector3>();
-    private bool random_dest_change;
-
+    private bool trial_change;
+    private List <Vector3> r_positions = new List <Vector3>();
+    private List <string> ids = new List <string>();
+    private string id;
     void Start()
     {
         if (manager.AgentMode)
@@ -47,6 +49,22 @@ public class PathManager : MonoBehaviour
             int selected_target = body.PickRandom();
             current_target = body.targets[selected_target].transform;
             nav_agent.destination = current_target.position;
+        }
+        else if (manager.Replay)
+        {
+            line_renderer = traj_toolbox.lineRenderer;
+            line_renderer2 = gameObject.GetComponent<LineRenderer>();
+            
+            for(int i=0; i < body.rec_positions.Count; i++)
+            {
+                var pos =  body.rec_positions[i];
+                r_positions.Add(new Vector3 (pos[0], pos[1], pos[2]));
+            }
+            ids = new List <string>(body.ids);
+            id = ids[0];
+
+            ReplayReset();            
+            
         }
     }
 
@@ -78,7 +96,7 @@ public class PathManager : MonoBehaviour
                     current_target = body.targets[selected_target].transform;
                     nav_agent.destination = current_target.position; 
                     body.collided = false;
-                    
+                    Debug.Log($"Heading to target {selected_target}");
                 }
                 VisualizePath(nav_agent.path.corners);
                 
@@ -86,13 +104,42 @@ public class PathManager : MonoBehaviour
             VisualizeCalPath(body.positions);
 
         }
+        else if (manager.Replay)
+        {
+            
+            if (body.collided)
+            {
+                body.collided = false;
+                ReplayReset();
+            }
+            VisualizeReplayPath(path);
+            VisualizeCalPath(body.positions);
+        }
+    }
+
+    void ReplayReset()
+    {
+        path = new List <Vector3>();
+        for (int i = 0; i < r_positions.Count; i++)
+        {
+            if (ids[i] == id)
+                path.Add(r_positions[i]);
+            else 
+            {
+                id = ids[i];
+                break;
+            }
+        }
+        r_positions.RemoveRange(0, path.Count);
+        ids.RemoveRange(0, path.Count);
+        path.RemoveAt(path.Count - 1);
     }
 
     public void SetDestinationQeue(IEnumerable<Vector3> path)
     {
         if (addStepVariation && !check_path)
         {
-            Debug.Log("Adding step variation on QEUE SETTING");
+            // Debug.Log("Adding step variation on QEUE SETTING");
             path = traj_toolbox.SimplifyPath(path);
             path = traj_toolbox.AddPathVariation(path);
             path_queue = new Queue<Vector3>(path);
@@ -120,6 +167,7 @@ public class PathManager : MonoBehaviour
             current_target = body.targets[selected_target].transform;
             check_path = true;
             body.collided = false;
+            Debug.Log($"Heading to target {selected_target}");
             return;
         }
 
@@ -144,6 +192,17 @@ public class PathManager : MonoBehaviour
 
         List<Vector3> path = new List<Vector3>(waypoints);
         // Debug.Log($"PathManager ({gameObject.name}): waypoints.Count = {path.Count}, line_renderer exists {line_renderer != null}");
+        line_renderer.positionCount = path.Count;
+        line_renderer.SetPositions(path.ToArray());
+    }
+
+    private void VisualizeReplayPath(List<Vector3> waypoints)
+    {
+        if (line_renderer == null) 
+            line_renderer = GetComponent<LineRenderer>();
+        
+        List<Vector3> path = new List<Vector3>(waypoints);
+
         line_renderer.positionCount = path.Count;
         line_renderer.SetPositions(path.ToArray());
     }

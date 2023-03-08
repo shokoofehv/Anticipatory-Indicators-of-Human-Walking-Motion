@@ -88,6 +88,22 @@ public class PathManager : MonoBehaviour
                 UpdateQueuedPathing();
     
             }
+            else if (manager.AddStepVariation)
+            {
+                if (check_path && nav_agent.hasPath)
+                {
+                    Vector3[] path = nav_agent.path.corners;
+
+                    nav_agent.path.ClearCorners();
+                    path = traj_toolbox.AddPathVariation(path).ToArray();
+                    traj_toolbox.Path = new List <Vector3>(path);
+                    SetDestinationQeue(path);
+
+                    check_path = false;
+                    VisualizePath(path);
+                }
+                UpdateQueuedPathing();
+            }
             else 
             {
                 if (body.collided)
@@ -139,8 +155,7 @@ public class PathManager : MonoBehaviour
     {
         if (addStepVariation && !check_path)
         {
-            // Debug.Log("Adding step variation on QEUE SETTING");
-            path = traj_toolbox.SimplifyPath(path);
+            // path = traj_toolbox.SimplifyPath(path);
             path = traj_toolbox.AddPathVariation(path);
             path_queue = new Queue<Vector3>(path);
         }
@@ -165,6 +180,7 @@ public class PathManager : MonoBehaviour
         {
             int selected_target = body.PickRandom();
             current_target = body.targets[selected_target].transform;
+            nav_agent.SetDestination(current_target.position);
             check_path = true;
             body.collided = false;
             Debug.Log($"Heading to target {selected_target}");
@@ -181,7 +197,6 @@ public class PathManager : MonoBehaviour
         {
             nav_agent.SetDestination(path_queue.Dequeue());
         }
-
 
     }
 

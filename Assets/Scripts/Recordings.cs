@@ -103,7 +103,7 @@ public class Recordings
         }
 
         Debug.Log("path " + path_id + " is saved.");
-        if (path_id == 1600)
+        if (path_id == 2500)
             UnityEditor.EditorApplication.isPlaying = false;
         
         path_id++;

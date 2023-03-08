@@ -62,8 +62,6 @@ public class BodyController : MonoBehaviour
 
     void Start()
     {
-        // _time = 0f;
-
         initial_position = transform.position;
         // transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
         head_rotation_rate = manager.HeadRotationRate;
@@ -159,7 +157,6 @@ public class BodyController : MonoBehaviour
     {
         while(true)
         {
-            // Debug.Log($" - {DateTime.Now:HH mm ss fff}");
             if (manager.Replay)
             {
                 var pos = rec_positions.PopAt(0);
@@ -196,9 +193,9 @@ public class BodyController : MonoBehaviour
                 transform.position = initial_position;
             else 
             {   
-                // Vector2 rand = Random.insideUnitCircle * 3;
-                // transform.position = new Vector3(rand.x, 0, rand.y);
-                transform.position = initial_position;
+                Vector2 rand = Random.insideUnitCircle * 0.3f;
+                transform.position = new Vector3(rand.x, 0, rand.y);
+                // transform.position = initial_position;
 
                 Vector3 targetDir = path_manager.current_target.position - transform.position;
                 float angle = Vector3.Angle(targetDir, transform.forward);
@@ -272,7 +269,7 @@ public class BodyController : MonoBehaviour
     }
 
     public int PickRandom()
-    {
+    {        
         int selected = Random.Range(0, n_targets); 
         return selected;
     }

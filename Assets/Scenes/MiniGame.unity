@@ -918,16 +918,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02fbff8a04f67ac4b9c48eada471857c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AgentMode: 0
+  AgentMode: 1
   BodyTorso: 1
-  Replay: 1
-  ArchTrajectory: 1
+  Replay: 0
+  ArchTrajectory: 0
   AddStepVariation: 1
   ScalingProbability: 1
   RandomHeadRotation: 0
   MouseControl: 0
   ShowProbability: 1
-  trainingDataset: 3
+  trainingDataset: 1
   recording: 4
   HeadRotationRate: 1.2
   body_controller: {fileID: 1668015761}
